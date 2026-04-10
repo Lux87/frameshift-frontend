@@ -1,0 +1,5 @@
+node_modules/
+.env
+sa-key.json
+*.json.bak
+uploads/

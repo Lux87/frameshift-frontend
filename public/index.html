@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrameShift Frontend</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface2: #1e1e1e;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --text-dim: #888;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --radius: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    header h1 span { color: var(--accent); }
+
+    #engineStatus {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: var(--surface2);
+      color: var(--text-dim);
+    }
+
+    #engineStatus.online { background: #052e16; color: var(--success); }
+    #engineStatus.offline { background: #2d0a0a; color: var(--error); }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .card h2 {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: var(--text-dim);
+    }
+
+    .field { margin-bottom: 16px; }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .drop-zone.has-file {
+      border-color: var(--success);
+      border-style: solid;
+    }
+
+    .drop-zone input { display: none; }
+    .drop-zone .icon { font-size: 28px; opacity: 0.4; }
+    .drop-zone .label { font-size: 13px; color: var(--text-dim); }
+    .drop-zone .filename { font-size: 12px; color: var(--success); font-weight: 500; }
+
+    .drop-zone .preview {
+      max-width: 100%;
+      max-height: 120px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+
+    select:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    .mode-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    button.primary {
+      width: 100%;
+      padding: 10px 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button.primary:hover { background: var(--accent-hover); }
+    button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .jobs-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .job-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .job-id {
+      font-size: 12px;
+      font-family: monospace;
+      color: var(--text-dim);
+    }
+
+    .job-mode {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .job-status {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .job-status.processing { color: var(--warning); }
+    .job-status.completed { color: var(--success); }
+    .job-status.failed { color: var(--error); }
+    .job-status.queued { color: var(--text-dim); }
+
+    .progress-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar .fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+      border-radius: 2px;
+    }
+
+    .progress-bar .fill.complete { background: var(--success); }
+
+    .job-step {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .job-duration {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .job-error {
+      font-size: 12px;
+      color: var(--error);
+      margin-top: 6px;
+      padding: 6px 8px;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: 4px;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .result-item {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .result-item img {
+      width: 100%;
+      display: block;
+      cursor: pointer;
+    }
+
+    .result-item .result-label {
+      padding: 6px 8px;
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .result-item .result-label a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .result-item .result-label a:hover { text-decoration: underline; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .lightbox.active { display: flex; }
+
+    .lightbox img {
+      max-width: 92vw;
+      max-height: 92vh;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Frame<span>Shift</span> Frontend</h1>
+    <div id="engineStatus">checking...</div>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      <div class="card" id="submitPanel">
+        <h2>Submit Job</h2>
+
+        <div class="field">
+          <label>Product Image *</label>
+          <div class="drop-zone" id="dropProduct">
+            <div class="icon">+</div>
+            <div class="label">Drop image or click to browse</div>
+            <input type="file" accept="image/png,image/jpeg,image/webp">
+          </div>
+        </div>
+
+        <div class="field" id="bgField">
+          <label>Background Image *</label>
+          <div class="drop-zone" id="dropBackground">
+            <div class="icon">+</div>
+            <div class="label">Drop image or click to browse</div>
+            <input type="file" accept="image/png,image/jpeg,image/webp">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Mode</label>
+          <select id="modeSelect">
+            <option value="2d">2D — Standard relight with scene analysis</option>
+            <option value="cgi">CGI — Make renders look photorealistic</option>
+            <option value="cgi-topview">CGI Top-view — Top-down CGI renders</option>
+            <option value="overlay">Overlay — Blend onto background</option>
+            <option value="lite">Lite — Lighter processing with softening</option>
+            <option value="prompt">Prompt — Text prompt (no background)</option>
+            <option value="prompt-raw">Prompt Raw — Raw prompt mode</option>
+          </select>
+          <div class="mode-desc" id="modeDesc"></div>
+        </div>
+
+        <div class="field" id="promptField" style="display:none">
+          <label>Action Prompt</label>
+          <input type="text" id="actionPrompt" placeholder="Describe the scene...">
+        </div>
+
+        <button class="primary" id="submitBtn" disabled>Submit Job</button>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Jobs</h2>
+          <div class="jobs-list" id="jobsList">
+            <div class="empty-state">No jobs yet. Submit one to get started.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox">
+    <img src="" alt="">
+  </div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+
+    const state = {
+      jobs: [],
+      polling: new Set(),
+    };
+
+    // ── Engine health ─────────────────────────────────────────────────────
+    async function checkEngine() {
+      const el = $('#engineStatus');
+      try {
+        const r = await fetch('/api/health');
+        if (r.ok) {
+          const d = await r.json();
+          el.textContent = `online — ${d.active_jobs || 0} active`;
+          el.className = 'online';
+        } else {
+          el.textContent = 'error';
+          el.className = 'offline';
+        }
+      } catch {
+        el.textContent = 'offline';
+        el.className = 'offline';
+      }
+    }
+    checkEngine();
+    setInterval(checkEngine, 15000);
+
+    // ── Drop zones ────────────────────────────────────────────────────────
+    function setupDropZone(zoneEl) {
+      const input = zoneEl.querySelector('input');
+
+      zoneEl.addEventListener('click', () => input.click());
+
+      zoneEl.addEventListener('dragover', e => {
+        e.preventDefault();
+        zoneEl.classList.add('drag-over');
+      });
+
+      zoneEl.addEventListener('dragleave', () => {
+        zoneEl.classList.remove('drag-over');
+      });
+
+      zoneEl.addEventListener('drop', e => {
+        e.preventDefault();
+        zoneEl.classList.remove('drag-over');
+        if (e.dataTransfer.files.length) {
+          input.files = e.dataTransfer.files;
+          showFile(zoneEl, e.dataTransfer.files[0]);
+        }
+      });
+
+      input.addEventListener('change', () => {
+        if (input.files.length) showFile(zoneEl, input.files[0]);
+      });
+    }
+
+    function showFile(zoneEl, file) {
+      zoneEl.classList.add('has-file');
+      const icon = zoneEl.querySelector('.icon');
+      const label = zoneEl.querySelector('.label');
+      if (icon) icon.style.display = 'none';
+
+      let fn = zoneEl.querySelector('.filename');
+      if (!fn) {
+        fn = document.createElement('div');
+        fn.className = 'filename';
+        zoneEl.appendChild(fn);
+      }
+      fn.textContent = file.name;
+      label.textContent = 'Click to change';
+
+      let prev = zoneEl.querySelector('.preview');
+      if (!prev) {
+        prev = document.createElement('img');
+        prev.className = 'preview';
+        zoneEl.appendChild(prev);
+      }
+      prev.src = URL.createObjectURL(file);
+
+      updateSubmitBtn();
+    }
+
+    setupDropZone($('#dropProduct'));
+    setupDropZone($('#dropBackground'));
+
+    // ── Mode ──────────────────────────────────────────────────────────────
+    const modeDescs = {
+      '2d': 'Standard relight — sends product + background to Gemini for AI relighting, then applies wavelet detail transfer.',
+      'cgi': 'Makes CGI renders look photorealistic by matching the lighting and style of the background.',
+      'cgi-topview': 'Same as CGI but optimized for top-down product views.',
+      'overlay': 'Blends the product onto the background, preserving position and natural integration.',
+      'lite': 'Lighter processing with 30% product softening overlay. Faster, less intensive.',
+      'prompt': 'Uses a text prompt instead of a background image for relighting.',
+      'prompt-raw': 'Raw prompt mode — no system prompt prepended, full control.',
+    };
+
+    const promptModes = new Set(['prompt', 'prompt-raw']);
+
+    function updateMode() {
+      const mode = $('#modeSelect').value;
+      $('#modeDesc').textContent = modeDescs[mode] || '';
+
+      const isPrompt = promptModes.has(mode);
+      $('#bgField').style.display = isPrompt ? 'none' : '';
+      $('#promptField').style.display = isPrompt ? '' : 'none';
+
+      updateSubmitBtn();
+    }
+
+    $('#modeSelect').addEventListener('change', updateMode);
+    updateMode();
+
+    function updateSubmitBtn() {
+      const hasProduct = $('#dropProduct input').files.length > 0;
+      const mode = $('#modeSelect').value;
+      const needsBg = !promptModes.has(mode);
+      const hasBg = $('#dropBackground input').files.length > 0;
+
+      $('#submitBtn').disabled = !hasProduct || (needsBg && !hasBg);
+    }
+
+    // ── Submit ────────────────────────────────────────────────────────────
+    $('#submitBtn').addEventListener('click', async () => {
+      const btn = $('#submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const form = new FormData();
+      form.append('product_image', $('#dropProduct input').files[0]);
+      form.append('mode', $('#modeSelect').value);
+
+      if (!promptModes.has($('#modeSelect').value)) {
+        form.append('background_image', $('#dropBackground input').files[0]);
+      }
+
+      if ($('#actionPrompt').value.trim()) {
+        form.append('action_prompt', $('#actionPrompt').value.trim());
+      }
+
+      try {
+        const r = await fetch('/api/process', { method: 'POST', body: form });
+        const d = await r.json();
+
+        if (!r.ok) throw new Error(d.error || 'Submit failed');
+
+        startPolling(d.job_id);
+        resetForm();
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Job';
+        updateSubmitBtn();
+      }
+    });
+
+    function resetForm() {
+      for (const zone of $$('.drop-zone')) {
+        zone.classList.remove('has-file');
+        const icon = zone.querySelector('.icon');
+        const label = zone.querySelector('.label');
+        if (icon) icon.style.display = '';
+        label.textContent = 'Drop image or click to browse';
+        const fn = zone.querySelector('.filename');
+        if (fn) fn.remove();
+        const prev = zone.querySelector('.preview');
+        if (prev) prev.remove();
+        zone.querySelector('input').value = '';
+      }
+      $('#actionPrompt').value = '';
+    }
+
+    // ── Job polling ───────────────────────────────────────────────────────
+    function startPolling(jobId) {
+      if (state.polling.has(jobId)) return;
+      state.polling.add(jobId);
+
+      const poll = async () => {
+        try {
+          const r = await fetch(`/api/jobs/${jobId}`);
+          const job = await r.json();
+
+          updateJobInState(job);
+          renderJobs();
+
+          if (job.status === 'completed') {
+            state.polling.delete(jobId);
+            loadDownloads(jobId);
+            checkEngine();
+            return;
+          }
+
+          if (job.status === 'failed') {
+            state.polling.delete(jobId);
+            checkEngine();
+            return;
+          }
+        } catch {}
+
+        if (state.polling.has(jobId)) {
+          setTimeout(poll, 2000);
+        }
+      };
+
+      poll();
+    }
+
+    function updateJobInState(job) {
+      const idx = state.jobs.findIndex(j => j.job_id === job.job_id);
+      if (idx >= 0) {
+        state.jobs[idx] = { ...state.jobs[idx], ...job };
+      } else {
+        state.jobs.unshift(job);
+      }
+    }
+
+    async function loadDownloads(jobId) {
+      try {
+        const r = await fetch(`/api/downloads/${jobId}`);
+        const downloads = await r.json();
+
+        const idx = state.jobs.findIndex(j => j.job_id === jobId);
+        if (idx >= 0) {
+          state.jobs[idx].downloads = downloads;
+          renderJobs();
+        }
+      } catch {}
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────
+    function renderJobs() {
+      const el = $('#jobsList');
+
+      if (!state.jobs.length) {
+        el.innerHTML = '<div class="empty-state">No jobs yet. Submit one to get started.</div>';
+        return;
+      }
+
+      el.innerHTML = state.jobs.map(job => {
+        const statusClass = job.status || 'queued';
+        const progress = job.progress || 0;
+        const step = job.current_step || job.status || '';
+
+        let html = `<div class="job-card" id="job-${job.job_id}">`;
+        html += `<div class="job-header">`;
+        html += `<span class="job-id">${job.job_id}</span>`;
+        html += `<span class="job-mode">${job.mode || job.input?.mode || '?'}</span>`;
+        html += `</div>`;
+
+        html += `<div class="job-status ${statusClass}">${statusClass.toUpperCase()}${step && step !== statusClass ? ' — ' + step : ''}</div>`;
+
+        if (statusClass === 'processing' || statusClass === 'queued') {
+          html += `<div class="progress-bar"><div class="fill" style="width:${progress}%"></div></div>`;
+        }
+
+        if (statusClass === 'completed') {
+          html += `<div class="progress-bar"><div class="fill complete" style="width:100%"></div></div>`;
+          if (job.duration_seconds) {
+            html += `<div class="job-duration">Completed in ${job.duration_seconds}s</div>`;
+          }
+        }
+
+        if (job.error) {
+          html += `<div class="job-error">${escHtml(job.error)}</div>`;
+        }
+
+        if (job.downloads && Object.keys(job.downloads).length) {
+          html += `<div class="results-grid">`;
+          for (const [name, url] of Object.entries(job.downloads)) {
+            html += `<div class="result-item">`;
+            html += `<img src="${url}" alt="${escHtml(name)}" onclick="openLightbox('${url}')" loading="lazy">`;
+            html += `<div class="result-label"><span>${escHtml(name)}</span><a href="${url}" download>download</a></div>`;
+            html += `</div>`;
+          }
+          html += `</div>`;
+        } else if (statusClass === 'completed' && !job.downloads) {
+          html += `<div class="job-step">Loading results...</div>`;
+        }
+
+        html += `</div>`;
+        return html;
+      }).join('');
+    }
+
+    function escHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // ── Lightbox ──────────────────────────────────────────────────────────
+    function openLightbox(url) {
+      const lb = $('#lightbox');
+      lb.querySelector('img').src = url;
+      lb.classList.add('active');
+    }
+
+    $('#lightbox').addEventListener('click', () => {
+      $('#lightbox').classList.remove('active');
+    });
+
+    // ── Load existing jobs on page load ───────────────────────────────────
+    (async () => {
+      try {
+        const r = await fetch('/api/jobs');
+        if (!r.ok) return;
+        const jobs = await r.json();
+
+        const sorted = jobs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
+
+        for (const job of sorted) {
+          updateJobInState(job);
+          if (job.status === 'processing' || job.status === 'queued') {
+            startPolling(job.job_id);
+          } else if (job.status === 'completed') {
+            loadDownloads(job.job_id);
+          }
+        }
+        renderJobs();
+      } catch {}
+    })();
+  </script>
+</body>
+</html>
