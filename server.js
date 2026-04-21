@@ -183,6 +183,39 @@ app.get('/api/download/:jobId/:filename', async (req, res) => {
   }
 });
 
+// ── NB2 AI Selection Edit proxy (blend editor) ───────────────────────────────
+const nb2Upload = multer({
+  dest: uploadsDir,
+  limits: { fileSize: 20 * 1024 * 1024, files: 15 },
+});
+
+app.post('/api/nb2-edit', nb2Upload.array('images', 13), async (req, res) => {
+  try {
+    const { readFileSync: rfs, unlinkSync } = await import('fs');
+    const formData = new FormData();
+
+    for (const field of ['prompt', 'aspect_ratio', 'resolution', 'temperature', 'output_format']) {
+      if (req.body[field] != null) formData.append(field, req.body[field]);
+    }
+
+    for (const file of req.files || []) {
+      const buf = rfs(file.path);
+      formData.append('images', new Blob([buf], { type: file.mimetype }), file.originalname);
+      try { unlinkSync(file.path); } catch {}
+    }
+
+    const resp = await proxyToEngine('/api/nb2-edit', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await resp.json().catch(() => ({}));
+    res.status(resp.status).json(data);
+  } catch (err) {
+    res.status(502).json({ error: `Failed to edit selection: ${err.message}` });
+  }
+});
+
 // ── Download URLs for a job ─────────────────────────────────────────────────
 app.get('/api/downloads/:jobId', async (req, res) => {
   try {

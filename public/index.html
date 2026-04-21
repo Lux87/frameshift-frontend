@@ -1,1003 +1,2369 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FrameShift Frontend</title>
-  <style>
-    :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --surface2: #1e1e1e;
-      --border: #2a2a2a;
-      --text: #e8e8e8;
-      --text-dim: #888;
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --success: #22c55e;
-      --error: #ef4444;
-      --warning: #f59e0b;
-      --radius: 8px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FrameShift Frontend</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #09090b;
+    --content-bg: #111113;
+    --surface: rgba(255,255,255,0.03);
+    --surface-solid: #18181b;
+    --border: rgba(255,255,255,0.06);
+    --border-hover: rgba(255,255,255,0.12);
+    --primary: #3B82F6;
+    --primary-hover: #2563EB;
+    --primary-glow: rgba(59,130,246,0.15);
+    --text: #fafafa;
+    --text2: #a1a1aa;
+    --text3: #52525b;
+    --success: #10b981;
+    --success-bg: rgba(16,185,129,0.1);
+    --warning: #f59e0b;
+    --warning-bg: rgba(245,158,11,0.1);
+    --danger: #ef4444;
+    --danger-bg: rgba(239,68,68,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --font: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --sidebar-w: 240px;
+  }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+  html { scrollbar-gutter: stable; }
 
-    header {
-      border-bottom: 1px solid var(--border);
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+  body {
+    font-family: var(--font);
+    background: var(--content-bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
 
-    header h1 {
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
 
-    header h1 span { color: var(--accent); }
+  /* ── Sidebar ────────────────────────────────────────────── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 30;
+    transition: transform 0.2s ease;
+  }
 
-    #engineStatus {
-      font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 12px;
-      background: var(--surface2);
-      color: var(--text-dim);
-    }
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+  }
 
-    #engineStatus.online { background: #052e16; color: var(--success); }
-    #engineStatus.offline { background: #2d0a0a; color: var(--error); }
+  .sidebar-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; height: 30px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: var(--radius-xs);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
 
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px;
-    }
+  .sidebar-brand {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .sidebar-brand span { color: var(--text3); font-weight: 400; }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 24px;
-      align-items: start;
-    }
+  .sidebar-nav { flex: 1; padding: 8px 0; overflow-y: auto; }
 
-    @media (max-width: 860px) {
-      .grid { grid-template-columns: 1fr; }
-    }
+  .nav-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 16px 6px;
+  }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-    }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    margin: 1px 8px;
+    border-radius: var(--radius-xs);
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.12s;
+    border: none;
+    background: transparent;
+    width: calc(100% - 16px);
+    text-align: left;
+    font-family: var(--font);
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .nav-item.active { background: rgba(255,255,255,0.06); color: var(--text); }
+  .nav-item svg { flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active svg, .nav-item:hover svg { opacity: 1; }
 
-    .card h2 {
-      font-size: 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-dim);
-      margin-bottom: 16px;
-    }
+  .sidebar-footer {
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
 
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 6px;
-      color: var(--text-dim);
-    }
+  .sidebar-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--text2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text3);
+    flex-shrink: 0;
+  }
+  .sidebar-status.online .status-dot { background: var(--success); box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+  .sidebar-status.offline .status-dot { background: var(--danger); }
+  .sidebar-status.online { color: var(--success); }
+  .sidebar-status.offline { color: var(--danger); }
+  .sidebar-status-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    .field { margin-bottom: 16px; }
+  .sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: var(--radius-xs);
+  }
 
-    .drop-zone {
-      border: 2px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      position: relative;
-      min-height: 100px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
+  .sidebar-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--primary-glow);
+    border: 1px solid rgba(59,130,246,0.3);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
 
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: var(--accent);
-      background: rgba(59, 130, 246, 0.05);
-    }
+  .sidebar-user-info { flex: 1; min-width: 0; }
+  .sidebar-user-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .sidebar-user-role { font-size: 11px; color: var(--text3); }
 
-    .drop-zone.has-file {
-      border-color: var(--success);
-      border-style: solid;
-    }
+  /* ── Mobile header ──────────────────────────────────────── */
+  .mobile-header {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .mobile-burger {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px;
+  }
+  .mobile-brand { font-size: 14px; font-weight: 600; color: var(--text); }
 
-    .drop-zone input { display: none; }
-    .drop-zone .icon { font-size: 28px; opacity: 0.4; }
-    .drop-zone .label { font-size: 13px; color: var(--text-dim); }
-    .drop-zone .filename { font-size: 12px; color: var(--success); font-weight: 500; }
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 29;
+  }
 
-    .drop-zone .preview {
-      max-width: 100%;
-      max-height: 120px;
-      border-radius: 4px;
-      margin-top: 4px;
-    }
+  /* ── Content ────────────────────────────────────────────── */
+  .content {
+    margin-left: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--content-bg);
+  }
+  .content-inner { max-width: 1120px; margin: 0 auto; padding: 32px; }
 
-    select, input[type="text"] {
-      width: 100%;
-      padding: 8px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-size: 13px;
-      outline: none;
-    }
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 16px;
+  }
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .page-header p {
+    font-size: 14px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
 
-    select:focus, input[type="text"]:focus {
-      border-color: var(--accent);
-    }
+  /* ── Forms ─────────────────────────────────────────────── */
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
 
-    .mode-desc {
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-top: 4px;
-      line-height: 1.5;
-    }
+  input[type="text"], input[type="password"], input[type="number"], select {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+  }
+  input::placeholder { color: var(--text3); }
 
-    button.primary {
-      width: 100%;
-      padding: 10px 16px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
+  .field { margin-bottom: 16px; }
+  .field .hint { font-size: 12px; color: var(--text3); margin-top: 6px; line-height: 1.5; }
 
-    button.primary:hover { background: var(--accent-hover); }
-    button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* ── Buttons ───────────────────────────────────────────── */
+  button {
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-xs);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  .btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    box-shadow: 0 0 12px var(--primary-glow);
+  }
+  .btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .btn-primary:active { transform: translateY(1px); }
 
-    .jobs-list { display: flex; flex-direction: column; gap: 12px; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--text); border-color: var(--border-hover); }
 
-    .job-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-    }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border-color: var(--border);
+  }
+  .btn-danger:hover { background: var(--danger-bg); border-color: rgba(239,68,68,0.3); }
 
-    .job-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-full { width: 100%; }
 
-    .job-id {
-      font-size: 12px;
-      font-family: monospace;
-      color: var(--text-dim);
-    }
+  /* ── Panels ────────────────────────────────────────────── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .panel-header h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .panel-body { padding: 20px; }
 
-    .job-mode {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      background: rgba(59, 130, 246, 0.15);
-      color: var(--accent);
-      font-weight: 500;
-    }
+  /* ── Submit grid ───────────────────────────────────────── */
+  .submit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
 
-    .job-status {
-      font-size: 12px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
+  /* ── Drop zone ─────────────────────────────────────────── */
+  .drop-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.015);
+  }
+  .drop-zone:hover,
+  .drop-zone.drag-over {
+    border-color: var(--primary);
+    background: var(--primary-glow);
+  }
+  .drop-zone.has-file {
+    border-color: var(--success);
+    border-style: solid;
+    background: var(--success-bg);
+  }
+  .drop-zone input { display: none; }
+  .drop-zone .icon {
+    font-size: 24px;
+    color: var(--text3);
+    font-weight: 300;
+    line-height: 1;
+  }
+  .drop-zone .dz-label { font-size: 13px; color: var(--text2); }
+  .drop-zone .filename {
+    font-size: 12px;
+    color: var(--success);
+    font-weight: 500;
+    font-family: var(--font-mono);
+    word-break: break-all;
+  }
+  .drop-zone .preview {
+    max-width: 100%;
+    max-height: 140px;
+    border-radius: 4px;
+    margin-top: 6px;
+  }
 
-    .job-status.processing { color: var(--warning); }
-    .job-status.completed { color: var(--success); }
-    .job-status.failed { color: var(--error); }
-    .job-status.queued { color: var(--text-dim); }
+  .mode-desc {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
 
-    .progress-bar {
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
+  /* ── Jobs ──────────────────────────────────────────────── */
+  .jobs-list { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
 
-    .progress-bar .fill {
-      height: 100%;
-      background: var(--accent);
-      transition: width 0.3s ease;
-      border-radius: 2px;
-    }
+  .job-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    transition: border-color 0.15s;
+  }
+  .job-card:hover { border-color: var(--border-hover); }
 
-    .progress-bar .fill.complete { background: var(--success); }
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 10px;
+  }
+  .job-id {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--text3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
 
-    .job-step {
-      font-size: 11px;
-      color: var(--text-dim);
-    }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .badge-mode { background: var(--primary-glow); color: var(--primary); }
+  .badge-completed { background: var(--success-bg); color: var(--success); }
+  .badge-failed { background: var(--danger-bg); color: var(--danger); }
+  .badge-processing { background: var(--primary-glow); color: var(--primary); }
+  .badge-queued { background: var(--warning-bg); color: var(--warning); }
 
-    .job-duration {
-      font-size: 11px;
-      color: var(--text-dim);
-      margin-top: 4px;
-    }
+  .job-status {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 8px;
+  }
+  .job-status strong { color: var(--text); font-weight: 600; }
 
-    .job-error {
-      font-size: 12px;
-      color: var(--error);
-      margin-top: 6px;
-      padding: 6px 8px;
-      background: rgba(239, 68, 68, 0.1);
-      border-radius: 4px;
-    }
+  .progress-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.3s ease;
+    border-radius: 2px;
+  }
+  .progress-bar .fill.complete { background: var(--success); }
 
-    .results-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px;
-      margin-top: 12px;
-    }
+  .job-duration {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
 
-    .result-item {
-      position: relative;
-      border-radius: var(--radius);
-      overflow: hidden;
-      background: var(--bg);
-      border: 1px solid var(--border);
-    }
+  .job-error {
+    font-size: 12px;
+    color: var(--danger);
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--danger-bg);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: var(--radius-xs);
+    font-family: var(--font-mono);
+  }
 
-    .result-item img {
-      width: 100%;
-      display: block;
-      cursor: pointer;
-    }
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .result-item {
+    position: relative;
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .result-item img {
+    width: 100%;
+    display: block;
+    cursor: pointer;
+  }
+  .result-item .result-label {
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--text3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+  }
+  .result-item .result-label a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .result-item .result-label a:hover { text-decoration: underline; }
 
-    .result-item .result-label {
-      padding: 6px 8px;
-      font-size: 11px;
-      color: var(--text-dim);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+  .empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text3);
+    font-size: 14px;
+  }
 
-    .result-item .result-label a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 500;
-    }
+  /* ── Lightbox ──────────────────────────────────────────── */
+  .lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .lightbox.active { display: flex; }
+  .lightbox img {
+    max-width: 92vw;
+    max-height: 92vh;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+  }
 
-    .result-item .result-label a:hover { text-decoration: underline; }
+  /* ── Connection (settings) ─────────────────────────────── */
+  .connection-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .connection-grid .field.full { grid-column: 1 / -1; }
 
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-dim);
-      font-size: 13px;
-    }
+  .input-with-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .input-with-action input { flex: 1; }
 
-    .lightbox {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
+  .sa-key-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+  }
+  .sa-key-row input[type="file"] { display: none; }
+  .sa-key-info {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: var(--font-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .sa-key-info.empty { color: var(--text3); }
+  .sa-key-info.active { color: var(--success); }
 
-    .lightbox.active { display: flex; }
+  .input-wrap { position: relative; }
+  .input-wrap input { padding-right: 56px; }
+  .toggle-vis {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 8px;
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .toggle-vis:hover { color: var(--text); }
 
-    .lightbox img {
-      max-width: 92vw;
-      max-height: 92vh;
-      object-fit: contain;
-      border-radius: 4px;
-    }
+  .settings-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+  }
+  .settings-status {
+    font-size: 12px;
+    margin-left: auto;
+    font-family: var(--font-mono);
+  }
+  .settings-status.ok { color: var(--success); }
+  .settings-status.err { color: var(--danger); }
+  .settings-status.loading { color: var(--warning); }
 
-    /* ── Settings panel ─────────────────────────────────────── */
-    .settings-toggle {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      padding: 6px 10px;
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: border-color 0.2s, color 0.2s;
-    }
-    .settings-toggle:hover { border-color: var(--accent); color: var(--text); }
+  /* ── Blend editor overlay ──────────────────────────────── */
+  .blend-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: none; }
+  .blend-overlay.open { display: block; }
 
-    .header-right { display: flex; align-items: center; gap: 10px; }
+  .canvas-wrap { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; cursor: crosshair; background: #111; }
+  .canvas-wrap canvas { transform-origin: 0 0; }
 
-    .settings-drawer {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-      border-bottom: 1px solid transparent;
-    }
-    .settings-drawer.open {
-      max-height: 600px;
-      border-bottom-color: var(--border);
-    }
+  .brush-cursor-preview {
+    position: absolute; border: 2px solid rgba(255,255,255,0.6); border-radius: 50%;
+    pointer-events: none; transform: translate(-50%, -50%); display: none; z-index: 10;
+  }
 
-    .settings-inner {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 20px 24px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
+  .blend-controls {
+    position: fixed; right: 20px; top: 20px; width: 220px; z-index: 10001;
+    background: var(--surface-solid); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px; display: flex; flex-direction: column; gap: 12px; max-height: calc(100vh - 40px);
+    overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .blend-controls h3 { font-size: 14px; font-weight: 600; margin: 0; }
 
-    @media (max-width: 700px) {
-      .settings-inner { grid-template-columns: 1fr; }
-    }
+  .ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+  .ctrl-group label { font-size: 11px; font-weight: 500; color: var(--text2); display: flex; justify-content: space-between; margin-bottom: 0; }
+  .ctrl-group input[type="range"] { width: 100%; accent-color: var(--primary); height: 4px; }
 
-    .settings-inner .field { margin-bottom: 0; }
+  .layers-header { display: flex; justify-content: space-between; align-items: center; }
+  .layers-header label { font-size: 11px; font-weight: 500; color: var(--text2); margin: 0; }
+  .layers-header-actions { display: flex; gap: 4px; }
+  .add-layer-btn {
+    width: 24px; height: 24px; background: var(--surface-solid); border: 1px solid var(--border);
+    border-radius: 4px; color: var(--text); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: background 0.15s; padding: 0;
+  }
+  .add-layer-btn:hover { background: var(--primary); border-color: var(--primary); color: white; }
+  .layers-list-container { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-solid); }
+  .layers-list { display: flex; flex-direction: column; gap: 1px; }
 
-    .settings-inner input[type="text"],
-    .settings-inner input[type="password"] {
-      width: 100%;
-      padding: 8px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      color: var(--text);
-      font-size: 13px;
-      font-family: monospace;
-      outline: none;
-    }
-    .settings-inner input:focus { border-color: var(--accent); }
+  .layer-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; font-size: 12px; transition: background 0.1s; cursor: default; }
+  .layer-row:hover { background: rgba(255,255,255,0.04); }
+  .layer-row.active { background: rgba(59,130,246,0.12); border-left: 3px solid var(--primary); }
+  .layer-row.layer-hidden { opacity: 0.4; }
+  .layer-info { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; }
+  .layer-info span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .layer-vis-btn { background: none; border: none; color: var(--text2); cursor: pointer; padding: 2px; display: flex; }
+  .layer-vis-btn:hover { color: var(--text); }
+  .layer-tools { display: flex; gap: 2px; }
+  .layer-tool-btn { width: 26px; height: 26px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.1s; padding: 0; }
+  .layer-tool-btn:hover { background: var(--surface-solid); color: var(--text); border-color: var(--text2); }
+  .layer-tool-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
 
-    .settings-actions {
-      grid-column: 1 / -1;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      padding-top: 4px;
-    }
+  .blend-actions {
+    position: fixed; top: 20px; left: 20px; z-index: 10001;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .blend-action-btn {
+    width: 44px; height: 44px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface-solid); color: var(--text); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; box-shadow: 0 4px 12px rgba(0,0,0,0.3); padding: 0;
+  }
+  .blend-action-btn:hover { background: rgba(255,255,255,0.04); border-color: var(--primary); transform: translateY(-1px); }
+  .blend-action-btn.active { background: #6366f1; border-color: #6366f1; }
+  .blend-action-btn.active svg { color: #fff; }
 
-    .btn-sm {
-      padding: 7px 14px;
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .btn-save {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
-    .btn-save:hover { background: var(--accent-hover); }
-    .btn-test {
-      background: transparent;
-      color: var(--text);
-    }
-    .btn-test:hover { border-color: var(--accent); }
+  .download-row { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); }
+  .download-row .btn-primary { font-size: 13px; padding: 8px 14px; width: 100%; }
 
-    .settings-status {
-      font-size: 12px;
-      margin-left: auto;
-    }
-    .settings-status.ok { color: var(--success); }
-    .settings-status.err { color: var(--error); }
-    .settings-status.loading { color: var(--warning); }
+  .blend-loading {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); z-index: 10002;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .blend-loading-inner { text-align: center; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .blend-loading-spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .blend-loading-bar { width: 200px; height: 4px; background: var(--surface-solid); border-radius: 2px; overflow: hidden; }
+  .blend-loading-bar-fill { height: 100%; background: var(--primary); transition: width 0.3s; width: 0%; }
 
-    .sa-key-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .sa-key-row input[type="file"] { display: none; }
-    .sa-key-info {
-      font-size: 12px;
-      color: var(--text-dim);
-      font-family: monospace;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-    }
-    .sa-key-info.active { color: var(--success); }
-    .btn-upload {
-      background: var(--surface2);
-      color: var(--text-dim);
-      padding: 6px 12px;
-      border-radius: var(--radius);
-      font-size: 12px;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      white-space: nowrap;
-    }
-    .btn-upload:hover { border-color: var(--accent); color: var(--text); }
+  /* Selection mode */
+  #selBox {
+    position: absolute; pointer-events: none; z-index: 20; box-sizing: border-box;
+    border: 2px dashed rgba(255,255,255,0.9);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(0,0,0,0.5);
+  }
+  #selBox.locked { border-color: #6366f1; box-shadow: 0 0 0 1px rgba(99,102,241,0.4), 0 0 12px rgba(99,102,241,0.3); }
 
-    .toggle-vis {
-      background: none;
-      border: none;
-      color: var(--text-dim);
-      cursor: pointer;
-      font-size: 12px;
-      padding: 2px 4px;
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-    .input-wrap { position: relative; }
-    .input-wrap input { padding-right: 40px; }
-  </style>
+  #selPromptBar {
+    position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 6px;
+    background: rgba(20,20,20,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 10px 14px;
+    z-index: 30; min-width: 360px; max-width: 560px; width: auto;
+  }
+  .sel-prompt-row { display: flex; align-items: center; gap: 8px; }
+  #selPromptInput {
+    flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 14px;
+    padding: 6px 4px; min-width: 0; box-shadow: none;
+  }
+  #selPromptInput::placeholder { color: rgba(255,255,255,0.4); }
+  #selRefThumbs { display: flex; gap: 4px; flex-wrap: wrap; }
+  .sel-ref-thumb { position: relative; width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  .sel-ref-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .sel-ref-remove {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: #fff; border: none;
+    font-size: 1rem; cursor: pointer; display: none; align-items: center; justify-content: center; padding: 0;
+  }
+  .sel-ref-thumb:hover .sel-ref-remove { display: flex; }
+  .sel-prompt-btn {
+    width: 36px; height: 36px; border: none; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; transition: all 0.15s; padding: 0;
+  }
+  .sel-prompt-ref { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+  .sel-prompt-ref:hover { background: rgba(255,255,255,0.2); color: #fff; }
+  .sel-prompt-send { background: #6366f1; color: #fff; }
+  .sel-prompt-send:hover { background: #4f46e5; transform: scale(1.05); }
+  .sel-prompt-cancel { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+  .sel-prompt-cancel:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+  /* Job-card open-blend button */
+  .blend-btn {
+    margin-top: 10px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.15s;
+    font-family: var(--font);
+  }
+  .blend-btn:hover { background: var(--primary-hover); }
+
+  @media (max-width: 700px) {
+    .blend-controls { right: 10px; left: 10px; top: auto; bottom: 0; width: auto; max-height: 40vh; border-radius: var(--radius) var(--radius) 0 0; }
+    .blend-actions { top: 10px; left: 10px; flex-direction: row; }
+  }
+
+  /* ── Toast ─────────────────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface-solid);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    color: var(--text);
+    transform: translateY(8px);
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ── Responsive ────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    .submit-grid { grid-template-columns: 1fr; }
+    .connection-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.open { display: block; }
+    .mobile-header { display: flex; }
+    .content { margin-left: 0; }
+    .content-inner { padding: 20px 16px; }
+    .page-header { flex-direction: column; gap: 12px; }
+  }
+</style>
 </head>
 <body>
-  <header>
-    <h1>Frame<span>Shift</span> Frontend</h1>
-    <div class="header-right">
-      <div id="engineStatus">checking...</div>
-      <button class="settings-toggle" id="settingsBtn" title="Settings">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M13.5 8a5.5 5.5 0 0 0-.1-.8l1.3-1-.7-1.2-1.5.5a5.5 5.5 0 0 0-1.2-.7L11 3.3h-1.4l-.3 1.5c-.4.1-.8.4-1.2.7L6.6 5l-.7 1.2 1.3 1a5.5 5.5 0 0 0 0 1.6l-1.3 1 .7 1.2 1.5-.5c.4.3.8.5 1.2.7l.3 1.5H11l.3-1.5c.4-.2.8-.4 1.2-.7l1.5.5.7-1.2-1.3-1a5.5 5.5 0 0 0 .1-.8z"/></svg>
-        Settings
-      </button>
-    </div>
-  </header>
 
-  <div class="settings-drawer" id="settingsDrawer">
-    <div class="settings-inner">
-      <div class="field">
-        <label>Engine URL</label>
-        <input type="text" id="setEngineUrl" placeholder="https://your-engine.com">
-      </div>
-      <div class="field">
-        <label>API Key</label>
-        <div class="input-wrap">
-          <input type="password" id="setApiKey" placeholder="fsk_...">
-          <button class="toggle-vis" id="toggleApiKey">show</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>IAP Client ID</label>
-        <input type="text" id="setIapClientId" placeholder="123456-abc.apps.googleusercontent.com (leave empty to disable)">
-      </div>
-      <div class="field">
-        <label>Service Account Key</label>
-        <div class="sa-key-row">
-          <span class="sa-key-info" id="saKeyInfo">no key loaded</span>
-          <button class="btn-upload" id="uploadSaBtn">Upload .json</button>
-          <input type="file" id="saKeyFile" accept=".json,application/json">
-        </div>
-      </div>
-      <div class="settings-actions">
-        <button class="btn-sm btn-save" id="saveSettingsBtn">Save</button>
-        <button class="btn-sm btn-test" id="testConnBtn">Test Connection</button>
-        <span class="settings-status" id="settingsStatus"></span>
-      </div>
-    </div>
+<!-- ═══ MOBILE HEADER ═══ -->
+<div class="mobile-header" id="mobileHeader">
+  <button class="mobile-burger" onclick="toggleSidebar()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <span class="mobile-brand">FrameShift Frontend</span>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">F</div>
+    <span class="sidebar-brand">FrameShift <span>Frontend</span></span>
   </div>
 
-  <div class="container">
-    <div class="grid">
-      <div class="card" id="submitPanel">
-        <h2>Submit Job</h2>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Workflow</div>
+    <button class="nav-item active" data-tab="submit" onclick="switchTab('submit')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Submit
+    </button>
+    <button class="nav-item" data-tab="jobs" onclick="switchTab('jobs')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Jobs
+    </button>
 
-        <div class="field">
-          <label>Product Image *</label>
-          <div class="drop-zone" id="dropProduct">
-            <div class="icon">+</div>
-            <div class="label">Drop image or click to browse</div>
-            <input type="file" accept="image/png,image/jpeg,image/webp">
-          </div>
-        </div>
+    <div class="nav-section-label">Settings</div>
+    <button class="nav-item" data-tab="connection" onclick="switchTab('connection')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Connection
+    </button>
+  </nav>
 
-        <div class="field" id="bgField">
-          <label>Background Image *</label>
-          <div class="drop-zone" id="dropBackground">
-            <div class="icon">+</div>
-            <div class="label">Drop image or click to browse</div>
-            <input type="file" accept="image/png,image/jpeg,image/webp">
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Mode</label>
-          <select id="modeSelect">
-            <option value="2d">2D — Standard relight with scene analysis</option>
-            <option value="cgi">CGI — Make renders look photorealistic</option>
-            <option value="cgi-topview">CGI Top-view — Top-down CGI renders</option>
-            <option value="overlay">Overlay — Blend onto background</option>
-            <option value="lite">Lite — Lighter processing with softening</option>
-            <option value="prompt">Prompt — Text prompt (no background)</option>
-            <option value="prompt-raw">Prompt Raw — Raw prompt mode</option>
-          </select>
-          <div class="mode-desc" id="modeDesc"></div>
-        </div>
-
-        <div class="field" id="promptField" style="display:none">
-          <label>Action Prompt</label>
-          <input type="text" id="actionPrompt" placeholder="Describe the scene...">
-        </div>
-
-        <button class="primary" id="submitBtn" disabled>Submit Job</button>
-      </div>
-
-      <div>
-        <div class="card">
-          <h2>Jobs</h2>
-          <div class="jobs-list" id="jobsList">
-            <div class="empty-state">No jobs yet. Submit one to get started.</div>
-          </div>
-        </div>
+  <div class="sidebar-footer">
+    <div class="sidebar-status" id="sidebarStatus">
+      <span class="status-dot"></span>
+      <span class="sidebar-status-text" id="sidebarStatusText">checking...</span>
+    </div>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">C</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name">Client</div>
+        <div class="sidebar-user-role">Frontend</div>
       </div>
     </div>
   </div>
+</aside>
 
-  <div class="lightbox" id="lightbox">
-    <img src="" alt="">
+<!-- ═══ CONTENT ═══ -->
+<main class="content">
+  <div class="content-inner">
+
+    <!-- ═══ SUBMIT TAB ═══ -->
+    <div id="submit-tab">
+      <div class="page-header">
+        <div>
+          <h1>Submit</h1>
+          <p>Create a new image processing job.</p>
+        </div>
+        <button class="btn-ghost btn-sm" onclick="switchTab('jobs')">View jobs</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>New Job</h2>
+        </div>
+        <div class="panel-body">
+          <div class="submit-grid">
+            <div class="field">
+              <label>Product Image *</label>
+              <div class="drop-zone" id="dropProduct">
+                <div class="icon">+</div>
+                <div class="dz-label">Drop image or click to browse</div>
+                <input type="file" accept="image/png,image/jpeg,image/webp">
+              </div>
+            </div>
+
+            <div class="field" id="bgField">
+              <label>Background Image *</label>
+              <div class="drop-zone" id="dropBackground">
+                <div class="icon">+</div>
+                <div class="dz-label">Drop image or click to browse</div>
+                <input type="file" accept="image/png,image/jpeg,image/webp">
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Detailing Mask <span style="color:var(--text3);font-weight:400;">(optional)</span></label>
+            <div class="drop-zone" id="dropMask">
+              <div class="icon">+</div>
+              <div class="dz-label">Drop mask image or click to browse</div>
+              <input type="file" accept="image/png,image/jpeg,image/webp">
+            </div>
+            <div class="hint">Optional mask to guide detail transfer on a specific region.</div>
+          </div>
+
+          <div class="field">
+            <label>Mode</label>
+            <select id="modeSelect">
+              <option value="2d">2D — Standard relight with scene analysis</option>
+              <option value="cgi">CGI — Make renders look photorealistic</option>
+              <option value="cgi-topview">CGI Top-view — Top-down CGI renders</option>
+              <option value="overlay">Overlay — Blend onto background</option>
+              <option value="lite">Lite — Lighter processing with softening</option>
+              <option value="prompt">Prompt — Text prompt (no background)</option>
+              <option value="prompt-raw">Prompt Raw — Raw prompt mode</option>
+            </select>
+            <div class="mode-desc" id="modeDesc"></div>
+          </div>
+
+          <div class="field" id="promptField" style="display:none">
+            <label>Action Prompt</label>
+            <input type="text" id="actionPrompt" placeholder="Describe the scene...">
+          </div>
+
+          <button class="btn-primary btn-full" id="submitBtn" disabled>Submit Job</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ JOBS TAB ═══ -->
+    <div id="jobs-tab" style="display:none">
+      <div class="page-header">
+        <div>
+          <h1>Jobs</h1>
+          <p>Monitor and review your processing jobs.</p>
+        </div>
+        <button class="btn-primary btn-sm" onclick="switchTab('submit')">New job</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Recent Jobs</h2>
+          <button class="btn-ghost btn-sm" onclick="refreshJobs()">Refresh</button>
+        </div>
+        <div class="jobs-list" id="jobsList">
+          <div class="empty">No jobs yet. Submit one to get started.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CONNECTION TAB ═══ -->
+    <div id="connection-tab" style="display:none">
+      <div class="page-header">
+        <div>
+          <h1>Connection</h1>
+          <p>Configure engine URL, API key, and IAP authentication.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Engine</h2>
+        </div>
+        <div class="panel-body">
+          <div class="connection-grid">
+            <div class="field full">
+              <label>Engine URL</label>
+              <input type="text" id="setEngineUrl" placeholder="https://your-engine.com">
+              <div class="hint">Base URL of your FrameShift Engine instance.</div>
+            </div>
+            <div class="field full">
+              <label>API Key</label>
+              <div class="input-wrap">
+                <input type="password" id="setApiKey" placeholder="fsk_...">
+                <button type="button" class="toggle-vis" id="toggleApiKey">show</button>
+              </div>
+              <div class="hint">Sent as <code style="font-family:var(--font-mono);color:var(--text2);">X-Api-Key</code> to the engine.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Identity-Aware Proxy (IAP)</h2>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label>IAP Client ID</label>
+            <input type="text" id="setIapClientId" placeholder="123456-abc.apps.googleusercontent.com (leave empty to disable)">
+            <div class="hint">OAuth client ID of the IAP-protected backend. Leave empty for direct mode.</div>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Service Account Key</label>
+            <div class="sa-key-row">
+              <span class="sa-key-info empty" id="saKeyInfo">no key loaded</span>
+              <button type="button" class="btn-ghost btn-sm" id="uploadSaBtn">Upload .json</button>
+              <input type="file" id="saKeyFile" accept=".json,application/json">
+            </div>
+            <div class="hint">Upload a GCP service account key (JSON) or leave empty to use Application Default Credentials.</div>
+          </div>
+        </div>
+        <div class="settings-actions">
+          <button class="btn-primary btn-sm" id="saveSettingsBtn">Save</button>
+          <button class="btn-ghost btn-sm" id="testConnBtn">Test connection</button>
+          <span class="settings-status" id="settingsStatus"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="lightbox" id="lightbox">
+  <img src="" alt="">
+</div>
+
+<!-- ═══ BLEND EDITOR OVERLAY ═══ -->
+<div class="blend-overlay" id="blendOverlay">
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="blendCanvas"></canvas>
+    <div class="brush-cursor-preview" id="brushCursor"></div>
+    <div id="selBox" style="display:none"></div>
+    <div id="selPromptBar" style="display:none">
+      <div id="selRefThumbs"></div>
+      <div class="sel-prompt-row">
+        <input type="text" id="selPromptInput" placeholder="Describe the edit (e.g. add dramatic lighting, change color)..." autocomplete="off">
+        <button class="sel-prompt-btn sel-prompt-ref" id="selRefBtn" title="Add reference image (up to 12)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </button>
+        <button class="sel-prompt-btn sel-prompt-send" id="selSendBtn" title="Send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+        <button class="sel-prompt-btn sel-prompt-cancel" id="selCancelBtn" title="Cancel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <input type="file" id="selRefInput" accept="image/*" multiple style="display:none">
+    </div>
   </div>
 
-  <script>
-    const $ = s => document.querySelector(s);
-    const $$ = s => document.querySelectorAll(s);
+  <div class="blend-actions" id="blendActions">
+    <button class="blend-action-btn" onclick="closeBlendEditor()" title="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <button class="blend-action-btn" onclick="BlendEditor.undo()" title="Undo (Ctrl+Z)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+    </button>
+    <button class="blend-action-btn" onclick="BlendEditor.resetView()" title="Reset View">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+    <button class="blend-action-btn" id="selModeBtn" onclick="BlendEditor.toggleSelectionMode()" title="AI Selection Edit">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h5v2H5v3H3V3zM16 3h5v5h-2V5h-3V3zM3 16h2v3h3v2H3v-5zM19 16h2v5h-5v-2h3v-3z"/><rect x="8" y="8" width="8" height="8" rx="1" stroke-dasharray="2 2"/></svg>
+    </button>
+  </div>
 
-    const state = {
-      jobs: [],
-      polling: new Set(),
-    };
+  <div class="blend-controls" id="blendControls">
+    <h3>Manual Blend</h3>
 
-    // ── Settings ──────────────────────────────────────────────────────────
-    $('#settingsBtn').addEventListener('click', () => {
-      const drawer = $('#settingsDrawer');
-      drawer.classList.toggle('open');
-      if (drawer.classList.contains('open')) loadSettings();
-    });
+    <div class="ctrl-group">
+      <label>Brush Size <span id="bSizeVal">50px</span></label>
+      <input type="range" id="bSize" min="1" max="200" value="50">
+    </div>
+    <div class="ctrl-group">
+      <label>Opacity <span id="bOpacityVal">100%</span></label>
+      <input type="range" id="bOpacity" min="1" max="100" value="100">
+    </div>
+    <div class="ctrl-group">
+      <label>Softness <span id="bSoftnessVal">50%</span></label>
+      <input type="range" id="bSoftness" min="0" max="100" value="50">
+    </div>
+    <div class="ctrl-group">
+      <label>Zoom <span id="bZoomVal">100%</span></label>
+      <input type="range" id="bZoom" min="10" max="1000" value="100">
+    </div>
 
-    $('#toggleApiKey').addEventListener('click', () => {
-      const inp = $('#setApiKey');
-      const btn = $('#toggleApiKey');
-      if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'hide'; }
-      else { inp.type = 'password'; btn.textContent = 'show'; }
-    });
+    <div class="ctrl-group">
+      <div class="layers-header">
+        <label>Layers</label>
+        <div class="layers-header-actions">
+          <button class="add-layer-btn" onclick="triggerImageLayerUpload()" title="Add image layer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </button>
+        </div>
+        <input type="file" id="imageLayerInput" accept="image/*" style="display:none">
+      </div>
+      <div class="layers-list-container">
+        <div class="layers-list" id="layersList"></div>
+      </div>
+    </div>
 
-    $('#uploadSaBtn').addEventListener('click', () => $('#saKeyFile').click());
-    $('#saKeyFile').addEventListener('change', async () => {
-      const file = $('#saKeyFile').files[0];
-      if (!file) return;
-      const status = $('#settingsStatus');
-      status.className = 'settings-status loading';
-      status.textContent = 'Uploading...';
+    <div class="download-row">
+      <button class="btn-primary" onclick="BlendEditor.download()">Download Result</button>
+    </div>
+  </div>
 
-      const form = new FormData();
-      form.append('sa_key', file);
-      try {
-        const r = await fetch('/api/settings/sa-key', { method: 'POST', body: form });
-        const d = await r.json();
-        if (!r.ok) throw new Error(d.error);
-        $('#saKeyInfo').textContent = d.sa_email;
-        $('#saKeyInfo').classList.add('active');
-        status.className = 'settings-status ok';
-        status.textContent = 'SA key uploaded';
-      } catch (err) {
-        status.className = 'settings-status err';
-        status.textContent = err.message;
-      }
-      $('#saKeyFile').value = '';
-    });
+  <div class="blend-loading" id="blendLoading" style="display:none">
+    <div class="blend-loading-inner">
+      <div class="blend-loading-spinner"></div>
+      <div id="blendLoadText">Loading images...</div>
+      <div class="blend-loading-bar"><div class="blend-loading-bar-fill" id="blendLoadBar"></div></div>
+      <div id="blendLoadDetail">0 / 0</div>
+    </div>
+  </div>
+</div>
 
-    async function loadSettings() {
-      try {
-        const r = await fetch('/api/settings');
-        const s = await r.json();
-        $('#setEngineUrl').value = s.engine_url || '';
-        $('#setApiKey').value = '';
-        $('#setApiKey').placeholder = s.api_key_set ? s.api_key : 'fsk_...';
-        $('#setIapClientId').value = s.iap_client_id || '';
-        if (s.sa_email) {
-          $('#saKeyInfo').textContent = s.sa_email;
-          $('#saKeyInfo').classList.add('active');
-        } else if (s.sa_key_path) {
-          $('#saKeyInfo').textContent = s.sa_key_path;
-          $('#saKeyInfo').classList.remove('active');
-        } else {
-          $('#saKeyInfo').textContent = 'no key loaded';
-          $('#saKeyInfo').classList.remove('active');
-        }
-      } catch {}
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+const state = {
+  jobs: [],
+  polling: new Set(),
+  currentTab: 'submit',
+};
+
+// ── Toast ─────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────
+function toggleSidebar() {
+  $('#sidebar').classList.toggle('open');
+  $('#sidebarOverlay').classList.toggle('open');
+}
+
+function switchTab(tab) {
+  state.currentTab = tab;
+  $$('.nav-item').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  ['submit', 'jobs', 'connection'].forEach(t => {
+    const el = document.getElementById(t + '-tab');
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+
+  if (tab === 'connection') loadSettings();
+  if (tab === 'jobs') refreshJobs();
+
+  if (window.innerWidth <= 768) {
+    $('#sidebar').classList.remove('open');
+    $('#sidebarOverlay').classList.remove('open');
+  }
+}
+window.switchTab = switchTab;
+
+// ── Settings ──────────────────────────────────────────────────────────
+$('#toggleApiKey').addEventListener('click', () => {
+  const inp = $('#setApiKey');
+  const btn = $('#toggleApiKey');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'hide'; }
+  else { inp.type = 'password'; btn.textContent = 'show'; }
+});
+
+$('#uploadSaBtn').addEventListener('click', () => $('#saKeyFile').click());
+
+$('#saKeyFile').addEventListener('change', async () => {
+  const file = $('#saKeyFile').files[0];
+  if (!file) return;
+  const status = $('#settingsStatus');
+  status.className = 'settings-status loading';
+  status.textContent = 'Uploading...';
+
+  const form = new FormData();
+  form.append('sa_key', file);
+  try {
+    const r = await fetch('/api/settings/sa-key', { method: 'POST', body: form });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    const info = $('#saKeyInfo');
+    info.textContent = d.sa_email;
+    info.classList.remove('empty');
+    info.classList.add('active');
+    status.className = 'settings-status ok';
+    status.textContent = 'SA key uploaded';
+  } catch (err) {
+    status.className = 'settings-status err';
+    status.textContent = err.message;
+  }
+  $('#saKeyFile').value = '';
+});
+
+async function loadSettings() {
+  try {
+    const r = await fetch('/api/settings');
+    const s = await r.json();
+    $('#setEngineUrl').value = s.engine_url || '';
+    $('#setApiKey').value = '';
+    $('#setApiKey').placeholder = s.api_key_set ? s.api_key : 'fsk_...';
+    $('#setIapClientId').value = s.iap_client_id || '';
+    const info = $('#saKeyInfo');
+    if (s.sa_email) {
+      info.textContent = s.sa_email;
+      info.classList.remove('empty');
+      info.classList.add('active');
+    } else if (s.sa_key_path) {
+      info.textContent = s.sa_key_path;
+      info.classList.remove('active', 'empty');
+    } else {
+      info.textContent = 'no key loaded';
+      info.classList.remove('active');
+      info.classList.add('empty');
     }
+  } catch {}
+}
 
-    $('#saveSettingsBtn').addEventListener('click', async () => {
-      const status = $('#settingsStatus');
-      status.className = 'settings-status loading';
-      status.textContent = 'Saving...';
-      const body = {};
-      const url = $('#setEngineUrl').value.trim();
-      const key = $('#setApiKey').value.trim();
-      const iap = $('#setIapClientId').value.trim();
+$('#saveSettingsBtn').addEventListener('click', async () => {
+  const status = $('#settingsStatus');
+  status.className = 'settings-status loading';
+  status.textContent = 'Saving...';
+  const body = {};
+  const url = $('#setEngineUrl').value.trim();
+  const key = $('#setApiKey').value.trim();
+  const iap = $('#setIapClientId').value.trim();
 
-      if (url) body.engine_url = url;
-      if (key) body.api_key = key;
-      body.iap_client_id = iap;
+  if (url) body.engine_url = url;
+  if (key) body.api_key = key;
+  body.iap_client_id = iap;
 
-      try {
-        const r = await fetch('/api/settings', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        if (!r.ok) throw new Error('Save failed');
-        status.className = 'settings-status ok';
-        status.textContent = 'Saved';
-        if (key) { $('#setApiKey').value = ''; }
-        loadSettings();
-        checkEngine();
-      } catch (err) {
-        status.className = 'settings-status err';
-        status.textContent = err.message;
-      }
+  try {
+    const r = await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     });
-
-    $('#testConnBtn').addEventListener('click', async () => {
-      const status = $('#settingsStatus');
-      status.className = 'settings-status loading';
-      status.textContent = 'Testing...';
-      try {
-        const r = await fetch('/api/settings/test', { method: 'POST' });
-        const d = await r.json();
-        if (d.ok) {
-          status.className = 'settings-status ok';
-          status.textContent = `Connected — ${d.engine_url} (IAP: ${d.iap_used ? 'yes' : 'no'})`;
-        } else {
-          status.className = 'settings-status err';
-          status.textContent = d.error || `HTTP ${d.status} from ${d.engine_url}`;
-        }
-      } catch (err) {
-        status.className = 'settings-status err';
-        status.textContent = err.message;
-      }
-    });
-
-    // ── Engine health ─────────────────────────────────────────────────────
-    async function checkEngine() {
-      const el = $('#engineStatus');
-      try {
-        const r = await fetch('/api/health');
-        if (r.ok) {
-          const d = await r.json();
-          el.textContent = `online — ${d.active_jobs || 0} active`;
-          el.className = 'online';
-        } else {
-          el.textContent = 'error';
-          el.className = 'offline';
-        }
-      } catch {
-        el.textContent = 'offline';
-        el.className = 'offline';
-      }
-    }
+    if (!r.ok) throw new Error('Save failed');
+    status.className = 'settings-status ok';
+    status.textContent = 'Saved';
+    if (key) { $('#setApiKey').value = ''; }
+    loadSettings();
     checkEngine();
-    setInterval(checkEngine, 15000);
+    toast('Settings saved');
+  } catch (err) {
+    status.className = 'settings-status err';
+    status.textContent = err.message;
+  }
+});
 
-    // ── Drop zones ────────────────────────────────────────────────────────
-    function setupDropZone(zoneEl) {
-      const input = zoneEl.querySelector('input');
-
-      zoneEl.addEventListener('click', () => input.click());
-
-      zoneEl.addEventListener('dragover', e => {
-        e.preventDefault();
-        zoneEl.classList.add('drag-over');
-      });
-
-      zoneEl.addEventListener('dragleave', () => {
-        zoneEl.classList.remove('drag-over');
-      });
-
-      zoneEl.addEventListener('drop', e => {
-        e.preventDefault();
-        zoneEl.classList.remove('drag-over');
-        if (e.dataTransfer.files.length) {
-          input.files = e.dataTransfer.files;
-          showFile(zoneEl, e.dataTransfer.files[0]);
-        }
-      });
-
-      input.addEventListener('change', () => {
-        if (input.files.length) showFile(zoneEl, input.files[0]);
-      });
+$('#testConnBtn').addEventListener('click', async () => {
+  const status = $('#settingsStatus');
+  status.className = 'settings-status loading';
+  status.textContent = 'Testing...';
+  try {
+    const r = await fetch('/api/settings/test', { method: 'POST' });
+    const d = await r.json();
+    if (d.ok) {
+      status.className = 'settings-status ok';
+      status.textContent = `Connected — ${d.engine_url} (IAP: ${d.iap_used ? 'yes' : 'no'})`;
+    } else {
+      status.className = 'settings-status err';
+      status.textContent = d.error || `HTTP ${d.status} from ${d.engine_url}`;
     }
+  } catch (err) {
+    status.className = 'settings-status err';
+    status.textContent = err.message;
+  }
+});
 
-    function showFile(zoneEl, file) {
-      zoneEl.classList.add('has-file');
-      const icon = zoneEl.querySelector('.icon');
-      const label = zoneEl.querySelector('.label');
-      if (icon) icon.style.display = 'none';
-
-      let fn = zoneEl.querySelector('.filename');
-      if (!fn) {
-        fn = document.createElement('div');
-        fn.className = 'filename';
-        zoneEl.appendChild(fn);
-      }
-      fn.textContent = file.name;
-      label.textContent = 'Click to change';
-
-      let prev = zoneEl.querySelector('.preview');
-      if (!prev) {
-        prev = document.createElement('img');
-        prev.className = 'preview';
-        zoneEl.appendChild(prev);
-      }
-      prev.src = URL.createObjectURL(file);
-
-      updateSubmitBtn();
+// ── Engine health ─────────────────────────────────────────────────────
+async function checkEngine() {
+  const el = $('#sidebarStatus');
+  const txt = $('#sidebarStatusText');
+  try {
+    const r = await fetch('/api/health');
+    if (r.ok) {
+      const d = await r.json();
+      txt.textContent = `online · ${d.active_jobs || 0} active`;
+      el.classList.add('online');
+      el.classList.remove('offline');
+    } else {
+      txt.textContent = 'error';
+      el.classList.add('offline');
+      el.classList.remove('online');
     }
+  } catch {
+    txt.textContent = 'offline';
+    el.classList.add('offline');
+    el.classList.remove('online');
+  }
+}
+checkEngine();
+setInterval(checkEngine, 15000);
 
-    setupDropZone($('#dropProduct'));
-    setupDropZone($('#dropBackground'));
+// ── Drop zones ────────────────────────────────────────────────────────
+function setupDropZone(zoneEl) {
+  const input = zoneEl.querySelector('input');
 
-    // ── Mode ──────────────────────────────────────────────────────────────
-    const modeDescs = {
-      '2d': 'Standard relight — sends product + background to Gemini for AI relighting, then applies wavelet detail transfer.',
-      'cgi': 'Makes CGI renders look photorealistic by matching the lighting and style of the background.',
-      'cgi-topview': 'Same as CGI but optimized for top-down product views.',
-      'overlay': 'Blends the product onto the background, preserving position and natural integration.',
-      'lite': 'Lighter processing with 30% product softening overlay. Faster, less intensive.',
-      'prompt': 'Uses a text prompt instead of a background image for relighting.',
-      'prompt-raw': 'Raw prompt mode — no system prompt prepended, full control.',
-    };
+  zoneEl.addEventListener('click', () => input.click());
 
-    const promptModes = new Set(['prompt', 'prompt-raw']);
+  zoneEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    zoneEl.classList.add('drag-over');
+  });
 
-    function updateMode() {
-      const mode = $('#modeSelect').value;
-      $('#modeDesc').textContent = modeDescs[mode] || '';
+  zoneEl.addEventListener('dragleave', () => {
+    zoneEl.classList.remove('drag-over');
+  });
 
-      const isPrompt = promptModes.has(mode);
-      $('#bgField').style.display = isPrompt ? 'none' : '';
-      $('#promptField').style.display = isPrompt ? '' : 'none';
-
-      updateSubmitBtn();
+  zoneEl.addEventListener('drop', e => {
+    e.preventDefault();
+    zoneEl.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) {
+      input.files = e.dataTransfer.files;
+      showFile(zoneEl, e.dataTransfer.files[0]);
     }
+  });
 
-    $('#modeSelect').addEventListener('change', updateMode);
-    updateMode();
+  input.addEventListener('change', () => {
+    if (input.files.length) showFile(zoneEl, input.files[0]);
+  });
+}
 
-    function updateSubmitBtn() {
-      const hasProduct = $('#dropProduct input').files.length > 0;
-      const mode = $('#modeSelect').value;
-      const needsBg = !promptModes.has(mode);
-      const hasBg = $('#dropBackground input').files.length > 0;
+function showFile(zoneEl, file) {
+  zoneEl.classList.add('has-file');
+  const icon = zoneEl.querySelector('.icon');
+  const label = zoneEl.querySelector('.dz-label');
+  if (icon) icon.style.display = 'none';
 
-      $('#submitBtn').disabled = !hasProduct || (needsBg && !hasBg);
-    }
+  let fn = zoneEl.querySelector('.filename');
+  if (!fn) {
+    fn = document.createElement('div');
+    fn.className = 'filename';
+    zoneEl.appendChild(fn);
+  }
+  fn.textContent = file.name;
+  if (label) label.textContent = 'Click to change';
 
-    // ── Submit ────────────────────────────────────────────────────────────
-    $('#submitBtn').addEventListener('click', async () => {
-      const btn = $('#submitBtn');
-      btn.disabled = true;
-      btn.textContent = 'Submitting...';
+  let prev = zoneEl.querySelector('.preview');
+  if (!prev) {
+    prev = document.createElement('img');
+    prev.className = 'preview';
+    zoneEl.appendChild(prev);
+  }
+  prev.src = URL.createObjectURL(file);
 
-      const form = new FormData();
-      form.append('product_image', $('#dropProduct input').files[0]);
-      form.append('mode', $('#modeSelect').value);
+  updateSubmitBtn();
+}
 
-      if (!promptModes.has($('#modeSelect').value)) {
-        form.append('background_image', $('#dropBackground input').files[0]);
-      }
+setupDropZone($('#dropProduct'));
+setupDropZone($('#dropBackground'));
+setupDropZone($('#dropMask'));
 
-      if ($('#actionPrompt').value.trim()) {
-        form.append('action_prompt', $('#actionPrompt').value.trim());
-      }
+// ── Mode ──────────────────────────────────────────────────────────────
+const modeDescs = {
+  '2d': 'Standard relight — sends product + background to Gemini for AI relighting, then applies wavelet detail transfer.',
+  'cgi': 'Makes CGI renders look photorealistic by matching the lighting and style of the background.',
+  'cgi-topview': 'Same as CGI but optimized for top-down product views.',
+  'overlay': 'Blends the product onto the background, preserving position and natural integration.',
+  'lite': 'Lighter processing with 30% product softening overlay. Faster, less intensive.',
+  'prompt': 'Uses a text prompt instead of a background image for relighting.',
+  'prompt-raw': 'Raw prompt mode — no system prompt prepended, full control.',
+};
 
-      try {
-        const r = await fetch('/api/process', { method: 'POST', body: form });
-        const d = await r.json();
+const promptModes = new Set(['prompt', 'prompt-raw']);
 
-        if (!r.ok) throw new Error(d.error || 'Submit failed');
+function updateMode() {
+  const mode = $('#modeSelect').value;
+  $('#modeDesc').textContent = modeDescs[mode] || '';
 
-        startPolling(d.job_id);
-        resetForm();
-      } catch (err) {
-        alert(`Error: ${err.message}`);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Submit Job';
-        updateSubmitBtn();
-      }
-    });
+  const isPrompt = promptModes.has(mode);
+  $('#bgField').style.display = isPrompt ? 'none' : '';
+  $('#promptField').style.display = isPrompt ? '' : 'none';
 
-    function resetForm() {
-      for (const zone of $$('.drop-zone')) {
-        zone.classList.remove('has-file');
-        const icon = zone.querySelector('.icon');
-        const label = zone.querySelector('.label');
-        if (icon) icon.style.display = '';
-        label.textContent = 'Drop image or click to browse';
-        const fn = zone.querySelector('.filename');
-        if (fn) fn.remove();
-        const prev = zone.querySelector('.preview');
-        if (prev) prev.remove();
-        zone.querySelector('input').value = '';
-      }
-      $('#actionPrompt').value = '';
-    }
+  updateSubmitBtn();
+}
 
-    // ── Job polling ───────────────────────────────────────────────────────
-    function startPolling(jobId) {
-      if (state.polling.has(jobId)) return;
-      state.polling.add(jobId);
+$('#modeSelect').addEventListener('change', updateMode);
+updateMode();
 
-      const poll = async () => {
-        try {
-          const r = await fetch(`/api/jobs/${jobId}`);
-          const job = await r.json();
+function updateSubmitBtn() {
+  const hasProduct = $('#dropProduct input').files.length > 0;
+  const mode = $('#modeSelect').value;
+  const needsBg = !promptModes.has(mode);
+  const hasBg = $('#dropBackground input').files.length > 0;
+  $('#submitBtn').disabled = !hasProduct || (needsBg && !hasBg);
+}
 
-          updateJobInState(job);
-          renderJobs();
+// ── Submit ────────────────────────────────────────────────────────────
+$('#submitBtn').addEventListener('click', async () => {
+  const btn = $('#submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
 
-          if (job.status === 'completed') {
-            state.polling.delete(jobId);
-            loadDownloads(jobId);
-            checkEngine();
-            return;
-          }
+  const form = new FormData();
+  form.append('product_image', $('#dropProduct input').files[0]);
+  form.append('mode', $('#modeSelect').value);
 
-          if (job.status === 'failed') {
-            state.polling.delete(jobId);
-            checkEngine();
-            return;
-          }
-        } catch {}
+  if (!promptModes.has($('#modeSelect').value)) {
+    form.append('background_image', $('#dropBackground input').files[0]);
+  }
 
-        if (state.polling.has(jobId)) {
-          setTimeout(poll, 2000);
-        }
-      };
+  const maskFile = $('#dropMask input').files[0];
+  if (maskFile) {
+    form.append('detailing_mask', maskFile);
+  }
 
-      poll();
-    }
+  if ($('#actionPrompt').value.trim()) {
+    form.append('action_prompt', $('#actionPrompt').value.trim());
+  }
 
-    function updateJobInState(job) {
-      const idx = state.jobs.findIndex(j => j.job_id === job.job_id);
-      if (idx >= 0) {
-        state.jobs[idx] = { ...state.jobs[idx], ...job };
-      } else {
-        state.jobs.unshift(job);
-      }
-    }
+  try {
+    const r = await fetch('/api/process', { method: 'POST', body: form });
+    const d = await r.json();
 
-    async function loadDownloads(jobId) {
-      try {
-        const r = await fetch(`/api/downloads/${jobId}`);
-        const downloads = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Submit failed');
 
-        const idx = state.jobs.findIndex(j => j.job_id === jobId);
-        if (idx >= 0) {
-          state.jobs[idx].downloads = downloads;
-          renderJobs();
-        }
-      } catch {}
-    }
+    startPolling(d.job_id);
+    resetForm();
+    toast('Job submitted');
+    switchTab('jobs');
+  } catch (err) {
+    toast(`Error: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Job';
+    updateSubmitBtn();
+  }
+});
 
-    // ── Render ────────────────────────────────────────────────────────────
-    function renderJobs() {
-      const el = $('#jobsList');
+function resetForm() {
+  for (const zone of $$('.drop-zone')) {
+    zone.classList.remove('has-file');
+    const icon = zone.querySelector('.icon');
+    const label = zone.querySelector('.dz-label');
+    if (icon) icon.style.display = '';
+    if (label) label.textContent = 'Drop image or click to browse';
+    const fn = zone.querySelector('.filename');
+    if (fn) fn.remove();
+    const prev = zone.querySelector('.preview');
+    if (prev) prev.remove();
+    zone.querySelector('input').value = '';
+  }
+  $('#actionPrompt').value = '';
+}
 
-      if (!state.jobs.length) {
-        el.innerHTML = '<div class="empty-state">No jobs yet. Submit one to get started.</div>';
+// ── Job polling ───────────────────────────────────────────────────────
+function startPolling(jobId) {
+  if (state.polling.has(jobId)) return;
+  state.polling.add(jobId);
+
+  const poll = async () => {
+    try {
+      const r = await fetch(`/api/jobs/${jobId}`);
+      const job = await r.json();
+
+      updateJobInState(job);
+      renderJobs();
+
+      if (job.status === 'completed') {
+        state.polling.delete(jobId);
+        loadDownloads(jobId);
+        checkEngine();
         return;
       }
 
-      el.innerHTML = state.jobs.map(job => {
-        const statusClass = job.status || 'queued';
-        const progress = job.progress || 0;
-        const step = job.current_step || job.status || '';
+      if (job.status === 'failed') {
+        state.polling.delete(jobId);
+        checkEngine();
+        return;
+      }
+    } catch {}
 
-        let html = `<div class="job-card" id="job-${job.job_id}">`;
-        html += `<div class="job-header">`;
-        html += `<span class="job-id">${job.job_id}</span>`;
-        html += `<span class="job-mode">${job.mode || job.input?.mode || '?'}</span>`;
+    if (state.polling.has(jobId)) {
+      setTimeout(poll, 2000);
+    }
+  };
+
+  poll();
+}
+
+function updateJobInState(job) {
+  const idx = state.jobs.findIndex(j => j.job_id === job.job_id);
+  if (idx >= 0) {
+    state.jobs[idx] = { ...state.jobs[idx], ...job };
+  } else {
+    state.jobs.unshift(job);
+  }
+}
+
+async function loadDownloads(jobId) {
+  try {
+    const r = await fetch(`/api/downloads/${jobId}`);
+    const downloads = await r.json();
+
+    const idx = state.jobs.findIndex(j => j.job_id === jobId);
+    if (idx >= 0) {
+      state.jobs[idx].downloads = downloads;
+      renderJobs();
+    }
+  } catch {}
+}
+
+async function refreshJobs() {
+  try {
+    const r = await fetch('/api/jobs');
+    if (!r.ok) return;
+    const jobs = await r.json();
+
+    const sorted = jobs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
+
+    state.jobs = [];
+    for (const job of sorted) {
+      updateJobInState(job);
+      if (job.status === 'processing' || job.status === 'queued') {
+        startPolling(job.job_id);
+      } else if (job.status === 'completed') {
+        loadDownloads(job.job_id);
+      }
+    }
+    renderJobs();
+  } catch {}
+}
+window.refreshJobs = refreshJobs;
+
+// ── Render jobs ───────────────────────────────────────────────────────
+function renderJobs() {
+  const el = $('#jobsList');
+
+  if (!state.jobs.length) {
+    el.innerHTML = '<div class="empty">No jobs yet. Submit one to get started.</div>';
+    return;
+  }
+
+  el.innerHTML = state.jobs.map(job => {
+    const statusClass = job.status || 'queued';
+    const progress = job.progress || 0;
+    const step = job.current_step || '';
+    const mode = job.mode || job.input?.mode || '?';
+
+    let html = `<div class="job-card" id="job-${escAttr(job.job_id)}">`;
+
+    html += `<div class="job-header">`;
+    html += `<span class="job-id">${escHtml(job.job_id)}</span>`;
+    html += `<span class="badge badge-mode">${escHtml(mode)}</span>`;
+    html += `<span class="badge badge-${statusClass}">${escHtml(statusClass.toUpperCase())}</span>`;
+    html += `</div>`;
+
+    if (step && step !== statusClass) {
+      html += `<div class="job-status"><strong>Step:</strong> ${escHtml(step)}</div>`;
+    }
+
+    if (statusClass === 'processing' || statusClass === 'queued') {
+      html += `<div class="progress-bar"><div class="fill" style="width:${progress}%"></div></div>`;
+    }
+
+    if (statusClass === 'completed') {
+      html += `<div class="progress-bar"><div class="fill complete" style="width:100%"></div></div>`;
+      if (job.duration_seconds) {
+        html += `<div class="job-duration">Completed in ${job.duration_seconds}s</div>`;
+      }
+    }
+
+    if (job.error) {
+      html += `<div class="job-error">${escHtml(job.error)}</div>`;
+    }
+
+    if (job.downloads && Object.keys(job.downloads).length) {
+      html += `<div class="results-grid">`;
+      for (const [name, url] of Object.entries(job.downloads)) {
+        html += `<div class="result-item">`;
+        html += `<img src="${escAttr(url)}" alt="${escHtml(name)}" onclick="openLightbox('${escAttr(url)}')" loading="lazy">`;
+        html += `<div class="result-label"><span>${escHtml(name)}</span><a href="${escAttr(url)}" download>download</a></div>`;
         html += `</div>`;
+      }
+      html += `</div>`;
 
-        html += `<div class="job-status ${statusClass}">${statusClass.toUpperCase()}${step && step !== statusClass ? ' — ' + step : ''}</div>`;
-
-        if (statusClass === 'processing' || statusClass === 'queued') {
-          html += `<div class="progress-bar"><div class="fill" style="width:${progress}%"></div></div>`;
-        }
-
-        if (statusClass === 'completed') {
-          html += `<div class="progress-bar"><div class="fill complete" style="width:100%"></div></div>`;
-          if (job.duration_seconds) {
-            html += `<div class="job-duration">Completed in ${job.duration_seconds}s</div>`;
-          }
-        }
-
-        if (job.error) {
-          html += `<div class="job-error">${escHtml(job.error)}</div>`;
-        }
-
-        if (job.downloads && Object.keys(job.downloads).length) {
-          html += `<div class="results-grid">`;
-          for (const [name, url] of Object.entries(job.downloads)) {
-            html += `<div class="result-item">`;
-            html += `<img src="${url}" alt="${escHtml(name)}" onclick="openLightbox('${url}')" loading="lazy">`;
-            html += `<div class="result-label"><span>${escHtml(name)}</span><a href="${url}" download>download</a></div>`;
-            html += `</div>`;
-          }
-          html += `</div>`;
-        } else if (statusClass === 'completed' && !job.downloads) {
-          html += `<div class="job-step">Loading results...</div>`;
-        }
-
-        html += `</div>`;
-        return html;
-      }).join('');
+      if (hasBlendableOutputs(job.downloads)) {
+        html += `<button class="blend-btn" onclick="openBlendForJob('${escAttr(job.job_id)}')">Open Blend Editor</button>`;
+      }
+    } else if (statusClass === 'completed' && !job.downloads) {
+      html += `<div class="job-duration">Loading results...</div>`;
     }
 
-    function escHtml(s) {
-      const d = document.createElement('div');
-      d.textContent = s;
-      return d.innerHTML;
-    }
+    html += `</div>`;
+    return html;
+  }).join('');
+}
 
-    // ── Lightbox ──────────────────────────────────────────────────────────
-    function openLightbox(url) {
-      const lb = $('#lightbox');
-      lb.querySelector('img').src = url;
-      lb.classList.add('active');
-    }
+function hasBlendableOutputs(downloads) {
+  if (!downloads) return false;
+  const keys = Object.keys(downloads);
+  return keys.some(k => k.includes('original')) ||
+         keys.some(k => k === 'base_image' || k === 'detailing_image' || k === 'final_image' || k === 'product');
+}
 
-    $('#lightbox').addEventListener('click', () => {
-      $('#lightbox').classList.remove('active');
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : String(s);
+  return d.innerHTML;
+}
+function escAttr(s) {
+  return escHtml(s).replace(/"/g, '&quot;');
+}
+
+// ── Lightbox ──────────────────────────────────────────────────────────
+function openLightbox(url) {
+  const lb = $('#lightbox');
+  lb.querySelector('img').src = url;
+  lb.classList.add('active');
+}
+window.openLightbox = openLightbox;
+
+$('#lightbox').addEventListener('click', () => {
+  $('#lightbox').classList.remove('active');
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// Blend Editor (ported from engine dashboard)
+// ─────────────────────────────────────────────────────────────────────
+const BlendEditor = {
+  canvas: null, ctx: null, wrapper: null,
+  layers: [],
+  activeLayerIndex: 0,
+  maxHistoryStates: 10,
+
+  brushSize: 50, brushOpacity: 1.0, brushSoftness: 0.5,
+  mode: 'reveal',
+  zoom: 1.0, panX: 0, panY: 0,
+  isDrawing: false, isPanning: false,
+  lastX: 0, lastY: 0,
+  panStartX: 0, panStartY: 0, panStartPanX: 0, panStartPanY: 0,
+  spacePressed: false,
+  cursorEl: null, zoomSlider: null, zoomVal: null,
+  _eventsAttached: false,
+
+  selectionMode: false,
+  selectionCanvasX: 0, selectionCanvasY: 0, selectionSize: 0,
+  selectionRefImages: [],
+
+  open(layersConfig) {
+    this.canvas = document.getElementById('blendCanvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.wrapper = document.getElementById('canvasWrap');
+    this.cursorEl = document.getElementById('brushCursor');
+
+    document.getElementById('blendOverlay').classList.add('open');
+    this._showLoading(layersConfig.length);
+
+    this.layers = [];
+    let loaded = 0, failed = 0;
+    const total = layersConfig.length;
+
+    layersConfig.forEach((cfg, i) => {
+      const layer = {
+        index: i, name: cfg.name,
+        image: new Image(),
+        canvas: document.createElement('canvas'),
+        hasMask: cfg.hasMask || false,
+        visible: true,
+        initialMaskState: cfg.initialMaskState || 'hidden',
+        maskCanvas: null, maskCtx: null, maskHistory: []
+      };
+      layer.image.crossOrigin = 'anonymous';
+      layer.ctx = layer.canvas.getContext('2d');
+      if (layer.hasMask) {
+        layer.maskCanvas = document.createElement('canvas');
+        layer.maskCtx = layer.maskCanvas.getContext('2d');
+      }
+
+      const done = () => {
+        if (loaded + failed === total) {
+          if (loaded > 0) { this._setupCanvas(); this._hideLoading(); }
+          else { toast('Failed to load images.'); this._hideLoading(); }
+        }
+      };
+      layer.image.onload = () => { loaded++; this._updateLoading(loaded, total); done(); };
+      layer.image.onerror = () => { failed++; console.error('Failed to load layer ' + i + ': ' + cfg.imageUrl); this._updateLoading(loaded, total); done(); };
+      layer.image.src = cfg.imageUrl;
+      this.layers.push(layer);
     });
 
-    // ── Load existing jobs on page load ───────────────────────────────────
-    (async () => {
+    this.activeLayerIndex = this.layers.length - 1;
+    if (!this._eventsAttached) { this._attachEvents(); this._eventsAttached = true; }
+    this._syncControls();
+  },
+
+  _showLoading(total) {
+    document.getElementById('blendLoading').style.display = 'flex';
+    this._updateLoading(0, total);
+  },
+  _updateLoading(loaded, total) {
+    const pct = total > 0 ? (loaded / total) * 100 : 0;
+    const bar = document.getElementById('blendLoadBar');
+    const txt = document.getElementById('blendLoadText');
+    const det = document.getElementById('blendLoadDetail');
+    if (bar) bar.style.width = pct + '%';
+    if (det) det.textContent = loaded + ' / ' + total + ' images loaded';
+    if (txt) txt.textContent = loaded === total ? 'Preparing canvas...' : 'Loading images... (' + Math.round(pct) + '%)';
+  },
+  _hideLoading() { document.getElementById('blendLoading').style.display = 'none'; },
+
+  _setupCanvas() {
+    const w = this.layers[0].image.naturalWidth;
+    const h = this.layers[0].image.naturalHeight;
+    this.canvas.width = w; this.canvas.height = h;
+
+    const vw = this.wrapper.clientWidth, vh = this.wrapper.clientHeight;
+    const fit = Math.min(vw / w, vh / h, 1) * 0.9;
+    this.zoom = fit;
+    this.panX = (vw - w * fit) / 2;
+    this.panY = (vh - h * fit) / 2;
+
+    this.layers.forEach(layer => {
+      layer.canvas.width = w; layer.canvas.height = h;
+      if (layer.hasMask && layer.maskCanvas) {
+        layer.maskCanvas.width = w; layer.maskCanvas.height = h;
+        if (layer.initialMaskState === 'visible') { layer.maskCtx.fillStyle = '#ffffff'; layer.maskCtx.fillRect(0, 0, w, h); }
+        else { layer.maskCtx.clearRect(0, 0, w, h); }
+      }
+    });
+
+    if (this.zoomSlider) this.zoomSlider.value = Math.round(this.zoom * 100);
+    if (this.zoomVal) this.zoomVal.textContent = Math.round(this.zoom * 100) + '%';
+    this._regenerateLayerUI();
+    this.render();
+  },
+
+  render() {
+    if (!this.canvas || this.layers.length === 0) return;
+    const w = this.canvas.width, h = this.canvas.height;
+    this.ctx.clearRect(0, 0, w, h);
+
+    for (const layer of this.layers) {
+      if (!layer.visible) continue;
+      if (!layer.hasMask) {
+        this.ctx.globalCompositeOperation = 'source-over';
+        this.ctx.drawImage(layer.image, 0, 0, w, h);
+      } else {
+        const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
+        const tc = tmp.getContext('2d');
+        tc.globalCompositeOperation = 'source-over';
+        tc.drawImage(layer.image, 0, 0, w, h);
+        tc.globalCompositeOperation = 'destination-in';
+        tc.drawImage(layer.maskCanvas, 0, 0);
+        this.ctx.globalCompositeOperation = 'source-over';
+        this.ctx.drawImage(tmp, 0, 0);
+      }
+    }
+    this.canvas.style.transform = 'translate(' + this.panX + 'px,' + this.panY + 'px) scale(' + this.zoom + ')';
+    this.canvas.style.transformOrigin = '0 0';
+  },
+
+  _getMousePos(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    return { x: (e.clientX - rect.left) * (this.canvas.width / rect.width), y: (e.clientY - rect.top) * (this.canvas.height / rect.height) };
+  },
+
+  _startDraw(e) {
+    this.isDrawing = true;
+    this._saveMaskState();
+    const pos = this._getMousePos(e);
+    this.lastX = pos.x; this.lastY = pos.y;
+    this._draw(e);
+  },
+
+  _draw(e) {
+    if (!this.isDrawing) return;
+    const pos = this._getMousePos(e);
+    const layer = this.layers[this.activeLayerIndex];
+    if (!layer || !layer.hasMask || !layer.maskCtx) return;
+    const mc = layer.maskCtx;
+    mc.lineCap = 'round'; mc.lineJoin = 'round'; mc.lineWidth = this.brushSize;
+    mc.shadowBlur = this.brushSize * this.brushSoftness;
+    mc.globalAlpha = this.brushOpacity;
+
+    if (this.mode === 'reveal') {
+      mc.globalCompositeOperation = 'source-over';
+      mc.strokeStyle = 'white'; mc.shadowColor = 'white';
+    } else {
+      mc.globalCompositeOperation = 'destination-out';
+      mc.strokeStyle = 'rgba(0,0,0,1)'; mc.shadowColor = 'rgba(0,0,0,1)';
+    }
+    mc.beginPath(); mc.moveTo(this.lastX, this.lastY); mc.lineTo(pos.x, pos.y); mc.stroke();
+    this.lastX = pos.x; this.lastY = pos.y;
+    this.render();
+  },
+
+  _stopDraw() { this.isDrawing = false; },
+
+  _saveMaskState() {
+    const layer = this.layers[this.activeLayerIndex];
+    if (layer && layer.hasMask && layer.maskCtx) {
       try {
-        const r = await fetch('/api/jobs');
-        if (!r.ok) return;
-        const jobs = await r.json();
+        const data = layer.maskCtx.getImageData(0, 0, layer.maskCanvas.width, layer.maskCanvas.height);
+        layer.maskHistory.push(data);
+        if (layer.maskHistory.length > this.maxHistoryStates) layer.maskHistory.shift();
+      } catch (e) { /* canvas too large for undo */ }
+    }
+  },
 
-        const sorted = jobs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
+  undo() {
+    if (!this.canvas || this.layers.length === 0) return;
+    const layer = this.layers[this.activeLayerIndex];
+    if (layer && layer.hasMask && layer.maskHistory.length > 0) {
+      layer.maskCtx.putImageData(layer.maskHistory.pop(), 0, 0);
+      this.render();
+    }
+  },
 
-        for (const job of sorted) {
-          updateJobInState(job);
-          if (job.status === 'processing' || job.status === 'queued') {
-            startPolling(job.job_id);
-          } else if (job.status === 'completed') {
-            loadDownloads(job.job_id);
-          }
+  _updateCursor(e) {
+    if (!this.cursorEl) return;
+    const rect = this.wrapper.getBoundingClientRect();
+    const x = e.clientX - rect.left, y = e.clientY - rect.top;
+    const sz = this.brushSize * this.zoom;
+    this.cursorEl.style.left = x + 'px'; this.cursorEl.style.top = y + 'px';
+    this.cursorEl.style.width = sz + 'px'; this.cursorEl.style.height = sz + 'px';
+  },
+
+  download() {
+    const exp = document.createElement('canvas'); exp.width = this.canvas.width; exp.height = this.canvas.height;
+    const ec = exp.getContext('2d');
+    const w = exp.width, h = exp.height;
+    for (const layer of this.layers) {
+      if (!layer.visible) continue;
+      if (!layer.hasMask) { ec.globalCompositeOperation = 'source-over'; ec.drawImage(layer.image, 0, 0, w, h); }
+      else {
+        const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
+        const tc = tmp.getContext('2d');
+        tc.drawImage(layer.image, 0, 0, w, h);
+        tc.globalCompositeOperation = 'destination-in';
+        tc.drawImage(layer.maskCanvas, 0, 0);
+        ec.globalCompositeOperation = 'source-over'; ec.drawImage(tmp, 0, 0);
+      }
+    }
+    const link = document.createElement('a');
+    link.download = 'blended-result-' + Date.now() + '.png';
+    link.href = exp.toDataURL('image/png');
+    link.click();
+  },
+
+  resetView() {
+    if (!this.canvas || this.layers.length === 0) return;
+    const iw = this.canvas.width, ih = this.canvas.height;
+    const vw = this.wrapper.clientWidth, vh = this.wrapper.clientHeight;
+    const fit = Math.min(vw / iw, vh / ih, 1) * 0.9;
+    this.zoom = fit; this.panX = (vw - iw * fit) / 2; this.panY = (vh - ih * fit) / 2;
+    if (this.zoomSlider) this.zoomSlider.value = Math.round(fit * 100);
+    if (this.zoomVal) this.zoomVal.textContent = Math.round(fit * 100) + '%';
+    this.render();
+  },
+
+  toggleSelectionMode() {
+    if (this.selectionMode) { this.exitSelectionMode(); return; }
+    this.selectionMode = 'selecting';
+    this.selectionSize = 0;
+    if (this.cursorEl) this.cursorEl.style.display = 'none';
+    if (this.wrapper) { this.wrapper.style.cursor = 'crosshair'; this.canvas.style.cursor = 'crosshair'; }
+    const btn = document.getElementById('selModeBtn');
+    if (btn) btn.classList.add('active');
+  },
+
+  exitSelectionMode() {
+    this.selectionMode = false;
+    this.selectionSize = 0;
+    this.selectionRefImages = [];
+    const box = document.getElementById('selBox');
+    if (box) { box.style.display = 'none'; box.classList.remove('locked'); }
+    const bar = document.getElementById('selPromptBar');
+    if (bar) bar.style.display = 'none';
+    const input = document.getElementById('selPromptInput');
+    if (input) input.value = '';
+    const thumbs = document.getElementById('selRefThumbs');
+    if (thumbs) thumbs.innerHTML = '';
+    if (this.cursorEl) this.cursorEl.style.display = 'block';
+    if (this.wrapper) { this.wrapper.style.cursor = ''; this.canvas.style.cursor = 'crosshair'; }
+    const btn = document.getElementById('selModeBtn');
+    if (btn) btn.classList.remove('active');
+  },
+
+  _resetSelectionToSelecting() {
+    this.selectionMode = 'selecting';
+    this.selectionSize = 0;
+    this.selectionRefImages = [];
+    const box = document.getElementById('selBox');
+    if (box) { box.style.display = 'none'; box.classList.remove('locked'); }
+    const bar = document.getElementById('selPromptBar');
+    if (bar) bar.style.display = 'none';
+    const input = document.getElementById('selPromptInput');
+    if (input) input.value = '';
+    const thumbs = document.getElementById('selRefThumbs');
+    if (thumbs) thumbs.innerHTML = '';
+    if (this.wrapper) { this.wrapper.style.cursor = 'crosshair'; this.canvas.style.cursor = 'crosshair'; }
+  },
+
+  _updateSelBoxDOM() {
+    const box = document.getElementById('selBox');
+    if (!box || this.selectionSize <= 0) { if (box) box.style.display = 'none'; return; }
+    const sx = this.panX + this.selectionCanvasX * this.zoom;
+    const sy = this.panY + this.selectionCanvasY * this.zoom;
+    const ss = this.selectionSize * this.zoom;
+    box.style.display = 'block';
+    box.style.left = sx + 'px'; box.style.top = sy + 'px';
+    box.style.width = ss + 'px'; box.style.height = ss + 'px';
+  },
+
+  setActiveLayer(index, mode) {
+    if (index >= 0 && index < this.layers.length) {
+      this.activeLayerIndex = index;
+      if (mode) this.mode = mode;
+      this._updateLayerHighlight();
+    }
+  },
+
+  toggleVisibility(index) {
+    if (index >= 0 && index < this.layers.length) {
+      this.layers[index].visible = !this.layers[index].visible;
+      this._regenerateLayerUI();
+      this.render();
+    }
+  },
+
+  addImageLayer(file) {
+    if (this.layers.length === 0) return;
+    const w = this.canvas.width, h = this.canvas.height;
+    const name = file.name.replace(/\.[^.]+$/, '') || 'Image ' + this.layers.length;
+    const url = URL.createObjectURL(file);
+    const src = new Image();
+    src.onload = () => {
+      const comp = document.createElement('canvas'); comp.width = w; comp.height = h;
+      const cc = comp.getContext('2d');
+      cc.drawImage(src, Math.round((w - src.naturalWidth) / 2), Math.round((h - src.naturalHeight) / 2), src.naturalWidth, src.naturalHeight);
+      URL.revokeObjectURL(url);
+      const layerImg = new Image();
+      layerImg.onload = () => {
+        const idx = this.layers.length;
+        const layer = {
+          index: idx, name, image: layerImg,
+          canvas: document.createElement('canvas'), hasMask: true,
+          maskCanvas: document.createElement('canvas'), maskHistory: [], visible: true, initialMaskState: 'visible'
+        };
+        layer.canvas.width = w; layer.canvas.height = h; layer.ctx = layer.canvas.getContext('2d');
+        layer.maskCanvas.width = w; layer.maskCanvas.height = h; layer.maskCtx = layer.maskCanvas.getContext('2d');
+        layer.maskCtx.fillStyle = '#ffffff'; layer.maskCtx.fillRect(0, 0, w, h);
+        this.layers.push(layer);
+        this.activeLayerIndex = idx;
+        this._regenerateLayerUI(); this.render();
+      };
+      layerImg.src = comp.toDataURL();
+    };
+    src.onerror = () => { URL.revokeObjectURL(url); toast('Failed to load image.'); };
+    src.src = url;
+  },
+
+  _regenerateLayerUI() {
+    const list = document.getElementById('layersList');
+    if (!list) return;
+    list.innerHTML = this.layers.map((layer, i) => {
+      const active = this.activeLayerIndex === i;
+      const eyeOpen = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      const eyeOff = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      const tools = layer.hasMask ? (
+        '<div class="layer-tools">' +
+          '<button class="layer-tool-btn ' + (active && this.mode === 'reveal' ? 'active' : '') + '" id="lt-' + i + '-r" onclick="BlendEditor.setActiveLayer(' + i + ',\'reveal\')" title="Reveal"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>' +
+          '<button class="layer-tool-btn ' + (active && this.mode === 'erase' ? 'active' : '') + '" id="lt-' + i + '-e" onclick="BlendEditor.setActiveLayer(' + i + ',\'erase\')" title="Erase"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20H7L3 16c-1-1-1-2.5 0-3.5l9.5-9.5c1-1 2.5-1 3.5 0l2.5 2.5c1 1 1 2.5 0 3.5L9 18"/></svg></button>' +
+        '</div>'
+      ) : '';
+      return '<div class="layer-row ' + (active ? 'active' : '') + ' ' + (!layer.visible ? 'layer-hidden' : '') + '">' +
+        '<div class="layer-info">' +
+          '<button class="layer-vis-btn" onclick="BlendEditor.toggleVisibility(' + i + ')" title="' + (layer.visible ? 'Hide' : 'Show') + '">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' + (layer.visible ? eyeOpen : eyeOff) + '</svg>' +
+          '</button>' +
+          '<span>' + escHtml(layer.name) + '</span>' +
+        '</div>' +
+        tools +
+      '</div>';
+    }).reverse().join('');
+  },
+
+  _updateLayerHighlight() {
+    document.querySelectorAll('.layer-tool-btn').forEach(b => b.classList.remove('active'));
+    const rBtn = document.getElementById('lt-' + this.activeLayerIndex + '-r');
+    const eBtn = document.getElementById('lt-' + this.activeLayerIndex + '-e');
+    if (this.mode === 'reveal' && rBtn) rBtn.classList.add('active');
+    if (this.mode === 'erase' && eBtn) eBtn.classList.add('active');
+    document.querySelectorAll('.layer-row').forEach(r => r.classList.remove('active'));
+    const rows = document.querySelectorAll('.layer-row');
+    const uiIdx = this.layers.length - 1 - this.activeLayerIndex;
+    if (rows[uiIdx]) rows[uiIdx].classList.add('active');
+  },
+
+  _syncControls() {
+    const bs = document.getElementById('bSize'); if (bs) bs.value = this.brushSize;
+    const bo = document.getElementById('bOpacity'); if (bo) bo.value = this.brushOpacity * 100;
+    const bso = document.getElementById('bSoftness'); if (bso) bso.value = this.brushSoftness * 100;
+  },
+
+  _attachEvents() {
+    const canvas = this.canvas;
+
+    canvas.addEventListener('mousedown', e => {
+      if (this.selectionMode) return;
+      if (e.button === 0 && !this.spacePressed) this._startDraw(e);
+    });
+    canvas.addEventListener('mousemove', e => {
+      if (this.selectionMode) return;
+      this._updateCursor(e);
+      if (!this.isPanning) this._draw(e);
+    });
+    canvas.addEventListener('mouseenter', () => { if (!this.selectionMode && this.cursorEl) this.cursorEl.style.display = 'block'; });
+    canvas.addEventListener('mouseleave', () => { if (this.cursorEl) this.cursorEl.style.display = 'none'; });
+    window.addEventListener('mouseup', () => this._stopDraw());
+
+    const wrapper = this.wrapper;
+    let selDragStartX = 0, selDragStartY = 0;
+    const toCanvas = (cx, cy) => {
+      const r = wrapper.getBoundingClientRect();
+      return { cx: (cx - r.left - this.panX) / this.zoom, cy: (cy - r.top - this.panY) / this.zoom };
+    };
+
+    wrapper.addEventListener('mousedown', e => {
+      if (this.selectionMode !== 'selecting' && this.selectionMode !== 'locked') return;
+      if (e.button !== 0) return;
+      if (e.target.closest('#selPromptBar, button, input, textarea')) return;
+      if (this.selectionMode === 'locked') {
+        document.getElementById('selPromptBar').style.display = 'none';
+        this.selectionRefImages = [];
+        document.getElementById('selRefThumbs').innerHTML = '';
+        wrapper.style.cursor = 'crosshair'; canvas.style.cursor = 'crosshair';
+      }
+      e.stopPropagation();
+      const c = toCanvas(e.clientX, e.clientY);
+      selDragStartX = c.cx; selDragStartY = c.cy;
+      this.selectionCanvasX = c.cx; this.selectionCanvasY = c.cy;
+      this.selectionSize = 0;
+      this.selectionMode = 'dragging';
+      const box = document.getElementById('selBox');
+      if (box) box.classList.remove('locked');
+      this._updateSelBoxDOM();
+    });
+
+    wrapper.addEventListener('mousemove', e => {
+      if (this.selectionMode !== 'dragging') return;
+      const c = toCanvas(e.clientX, e.clientY);
+      const dx = c.cx - selDragStartX, dy = c.cy - selDragStartY;
+      const sz = Math.max(Math.abs(dx), Math.abs(dy));
+      this.selectionSize = Math.round(sz);
+      this.selectionCanvasX = dx >= 0 ? selDragStartX : selDragStartX - sz;
+      this.selectionCanvasY = dy >= 0 ? selDragStartY : selDragStartY - sz;
+      this._updateSelBoxDOM();
+    });
+
+    wrapper.addEventListener('mouseup', e => {
+      if (this.selectionMode !== 'dragging') return;
+      if (e.button !== 0) return;
+      if (this.selectionSize < 10) {
+        this.selectionMode = 'selecting';
+        document.getElementById('selBox').style.display = 'none';
+        return;
+      }
+      this.selectionMode = 'locked';
+      const box = document.getElementById('selBox');
+      if (box) box.classList.add('locked');
+      wrapper.style.cursor = 'default'; canvas.style.cursor = 'default';
+      const bar = document.getElementById('selPromptBar');
+      if (bar) bar.style.display = 'flex';
+      document.getElementById('selPromptInput')?.focus();
+
+      document.getElementById('selSendBtn').onclick = () => triggerSelectionEdit();
+      document.getElementById('selCancelBtn').onclick = () => this._resetSelectionToSelecting();
+
+      const refBtn = document.getElementById('selRefBtn');
+      const refInput = document.getElementById('selRefInput');
+      refBtn.onclick = () => { if (this.selectionRefImages.length < 12) refInput.click(); };
+      refInput.onchange = (ev) => {
+        const files = Array.from(ev.target.files);
+        const remaining = 12 - this.selectionRefImages.length;
+        files.slice(0, remaining).forEach(file => {
+          this.selectionRefImages.push(file);
+          const thumbs = document.getElementById('selRefThumbs');
+          const idx = this.selectionRefImages.length - 1;
+          const reader = new FileReader();
+          reader.onload = (re) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'sel-ref-thumb'; thumb.dataset.index = idx;
+            thumb.innerHTML = '<img src="' + re.target.result + '" alt="ref"><button class="sel-ref-remove" title="Remove">x</button>';
+            thumb.querySelector('.sel-ref-remove').onclick = () => {
+              const i = parseInt(thumb.dataset.index);
+              this.selectionRefImages.splice(i, 1);
+              thumb.remove();
+              thumbs.querySelectorAll('.sel-ref-thumb').forEach((t, j) => t.dataset.index = j);
+            };
+            thumbs.appendChild(thumb);
+          };
+          reader.readAsDataURL(file);
+        });
+        ev.target.value = '';
+      };
+
+      const promptInput = document.getElementById('selPromptInput');
+      if (promptInput) promptInput.onkeydown = (ev) => { if (ev.key === 'Enter') triggerSelectionEdit(); };
+    });
+
+    // Brush controls
+    const bsInput = document.getElementById('bSize'), bsVal = document.getElementById('bSizeVal');
+    if (bsInput) bsInput.addEventListener('input', e => { this.brushSize = parseInt(e.target.value); bsVal.textContent = this.brushSize + 'px'; });
+    const boInput = document.getElementById('bOpacity'), boVal = document.getElementById('bOpacityVal');
+    if (boInput) boInput.addEventListener('input', e => { this.brushOpacity = parseInt(e.target.value) / 100; boVal.textContent = e.target.value + '%'; });
+    const bsoInput = document.getElementById('bSoftness'), bsoVal = document.getElementById('bSoftnessVal');
+    if (bsoInput) bsoInput.addEventListener('input', e => { this.brushSoftness = parseInt(e.target.value) / 100; bsoVal.textContent = e.target.value + '%'; });
+
+    this.zoomSlider = document.getElementById('bZoom');
+    this.zoomVal = document.getElementById('bZoomVal');
+    if (this.zoomSlider) {
+      this.zoomSlider.addEventListener('input', e => {
+        const nz = parseInt(e.target.value) / 100;
+        const cX = this.wrapper.clientWidth / 2, cY = this.wrapper.clientHeight / 2;
+        const canX = (cX - this.panX) / this.zoom, canY = (cY - this.panY) / this.zoom;
+        this.zoom = nz;
+        this.panX = cX - canX * this.zoom; this.panY = cY - canY * this.zoom;
+        this.zoomVal.textContent = e.target.value + '%';
+        this.render();
+      });
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Space' && !this.spacePressed && !e.target.matches('input, textarea')) {
+        e.preventDefault(); this.spacePressed = true;
+        if (canvas) canvas.style.cursor = 'grab';
+        if (this.cursorEl) this.cursorEl.style.display = 'none';
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        if (document.getElementById('blendOverlay').classList.contains('open')) {
+          e.preventDefault(); this.undo();
         }
-        renderJobs();
-      } catch {}
-    })();
-  </script>
+      }
+    });
+    window.addEventListener('keyup', e => {
+      if (e.code === 'Space') {
+        this.spacePressed = false;
+        if (canvas && !this.isPanning) canvas.style.cursor = 'crosshair';
+        if (this.cursorEl) this.cursorEl.style.display = 'block';
+        if (this.isPanning) { this.isPanning = false; if (canvas) canvas.style.cursor = 'crosshair'; }
+      }
+    });
+
+    canvas.addEventListener('mousedown', e => {
+      if (e.button === 1 || (e.button === 0 && this.spacePressed)) {
+        e.preventDefault(); this.isPanning = true;
+        this.panStartX = e.clientX; this.panStartY = e.clientY;
+        this.panStartPanX = this.panX; this.panStartPanY = this.panY;
+        canvas.style.cursor = 'grabbing';
+      }
+    });
+    canvas.addEventListener('mousemove', e => {
+      if (this.isPanning) {
+        this.panX = this.panStartPanX + (e.clientX - this.panStartX);
+        this.panY = this.panStartPanY + (e.clientY - this.panStartY);
+        this.render();
+        if (this.selectionMode) this._updateSelBoxDOM();
+      }
+    });
+    window.addEventListener('mouseup', e => {
+      if (e.button === 1 || (e.button === 0 && this.isPanning)) {
+        this.isPanning = false;
+        if (canvas) canvas.style.cursor = this.spacePressed ? 'grab' : 'crosshair';
+      }
+    });
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      const wr = this.wrapper.getBoundingClientRect();
+      const mx = e.clientX - wr.left, my = e.clientY - wr.top;
+      const factor = Math.exp(-e.deltaY * 0.001);
+      const newPct = Math.max(10, Math.min(1000, this.zoom * 100 * factor));
+      const nz = newPct / 100;
+      const cx = (mx - this.panX) / this.zoom, cy = (my - this.panY) / this.zoom;
+      this.zoom = nz; this.panX = mx - cx * nz; this.panY = my - cy * nz;
+      if (this.zoomSlider) this.zoomSlider.value = newPct;
+      if (this.zoomVal) this.zoomVal.textContent = Math.round(newPct) + '%';
+      this.render();
+      if (this.selectionMode) this._updateSelBoxDOM();
+    }, { passive: false });
+
+    let lastDist = null, lastCenter = null;
+    canvas.addEventListener('touchstart', e => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const t1 = e.touches[0], t2 = e.touches[1];
+        lastDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        lastCenter = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+      }
+    }, { passive: false });
+    canvas.addEventListener('touchmove', e => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const t1 = e.touches[0], t2 = e.touches[1];
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const center = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+        if (lastDist && lastCenter) {
+          const delta = (dist - lastDist) * 0.02;
+          const newPct = Math.max(10, Math.min(1000, this.zoom * 100 + delta));
+          const nz = newPct / 100;
+          const wr = this.wrapper.getBoundingClientRect();
+          const px = center.x - wr.left, py = center.y - wr.top;
+          const cx = (px - this.panX) / this.zoom, cy = (py - this.panY) / this.zoom;
+          this.zoom = nz; this.panX = px - cx * nz; this.panY = py - cy * nz;
+          this.panX += center.x - lastCenter.x; this.panY += center.y - lastCenter.y;
+          if (this.zoomSlider) this.zoomSlider.value = newPct;
+          if (this.zoomVal) this.zoomVal.textContent = Math.round(newPct) + '%';
+          this.render();
+        }
+        lastDist = dist; lastCenter = center;
+      }
+    }, { passive: false });
+    canvas.addEventListener('touchend', e => { if (e.touches.length < 2) { lastDist = null; lastCenter = null; } }, { passive: false });
+
+    document.getElementById('imageLayerInput').addEventListener('change', e => {
+      if (e.target.files[0]) { this.addImageLayer(e.target.files[0]); e.target.value = ''; }
+    });
+  }
+};
+window.BlendEditor = BlendEditor;
+
+function openBlendForJob(jobId) {
+  const job = state.jobs.find(j => j.job_id === jobId);
+  if (!job || !job.downloads) { toast('No results available yet'); return; }
+  const downloads = job.downloads;
+
+  const has = (k) => !!downloads[k];
+  const url = (k) => downloads[k];
+  const layers = [];
+
+  // Prefer engine's "original" variants; fall back to base keys
+  const baseKey = has('base_image_original') ? 'base_image_original' : (has('base_image') ? 'base_image' : null);
+  const detailKey = has('detailing_image_original') ? 'detailing_image_original' : (has('detailing_image') ? 'detailing_image' : null);
+  const finalKey = has('final_image_original') ? 'final_image_original' : (has('final_image') ? 'final_image' : null);
+  const productKey = has('product_original') ? 'product_original' : (has('product') ? 'product' : null);
+
+  if (baseKey && detailKey && !finalKey) {
+    layers.push({ imageUrl: url(baseKey), name: 'Base', hasMask: false });
+    layers.push({ imageUrl: url(detailKey), name: 'Detailing', hasMask: true, initialMaskState: 'hidden' });
+  } else if (finalKey && baseKey) {
+    layers.push({ imageUrl: url(baseKey), name: 'Base', hasMask: false });
+    layers.push({ imageUrl: url(finalKey), name: 'Combined', hasMask: true, initialMaskState: 'visible' });
+    if (detailKey) {
+      layers.push({ imageUrl: url(detailKey), name: 'Detailing', hasMask: true, initialMaskState: 'hidden' });
+    }
+  } else if (detailKey) {
+    layers.push({ imageUrl: url(detailKey), name: 'Detailing', hasMask: false });
+  } else if (finalKey) {
+    layers.push({ imageUrl: url(finalKey), name: 'Final', hasMask: false });
+  } else {
+    const first = Object.entries(downloads).find(([k]) => k.includes('original')) || Object.entries(downloads)[0];
+    if (first) layers.push({ imageUrl: first[1], name: first[0].replace(/_/g, ' '), hasMask: false });
+  }
+
+  if (productKey) {
+    layers.push({ imageUrl: url(productKey), name: 'Product', hasMask: true, initialMaskState: 'hidden' });
+  }
+
+  if (layers.length === 0) { toast('No blendable layers found'); return; }
+  BlendEditor.open(layers);
+}
+window.openBlendForJob = openBlendForJob;
+
+function closeBlendEditor() {
+  document.getElementById('blendOverlay').classList.remove('open');
+}
+window.closeBlendEditor = closeBlendEditor;
+
+function triggerImageLayerUpload() {
+  document.getElementById('imageLayerInput').click();
+}
+window.triggerImageLayerUpload = triggerImageLayerUpload;
+
+// ── AI Selection Edit (NB2) ───────────────────────────────────────────
+async function triggerSelectionEdit() {
+  const prompt = (document.getElementById('selPromptInput')?.value || '').trim();
+  if (!prompt) { document.getElementById('selPromptInput')?.focus(); return; }
+
+  const editor = BlendEditor;
+  const SEL_SIZE = editor.selectionSize || 1024;
+  const nbpRes = SEL_SIZE > 1024 ? '2K' : '1K';
+  const selX = Math.round(editor.selectionCanvasX);
+  const selY = Math.round(editor.selectionCanvasY);
+  const w = editor.canvas.width, h = editor.canvas.height;
+
+  const refImages = (editor.selectionRefImages || []).slice();
+  document.getElementById('selPromptBar').style.display = 'none';
+  editor.exitSelectionMode();
+
+  let placeholderIdx = -1;
+  try {
+    const full = document.createElement('canvas'); full.width = w; full.height = h;
+    const fc = full.getContext('2d');
+    for (const layer of editor.layers) {
+      if (!layer.visible || !layer.image || !layer.image.complete) continue;
+      if (!layer.hasMask) { fc.globalCompositeOperation = 'source-over'; fc.drawImage(layer.image, 0, 0, w, h); }
+      else if (layer.maskCanvas) {
+        const t = document.createElement('canvas'); t.width = w; t.height = h;
+        const tc = t.getContext('2d');
+        tc.drawImage(layer.image, 0, 0, w, h);
+        tc.globalCompositeOperation = 'destination-in';
+        tc.drawImage(layer.maskCanvas, 0, 0);
+        fc.globalCompositeOperation = 'source-over'; fc.drawImage(t, 0, 0);
+      }
+    }
+
+    const crop = document.createElement('canvas'); crop.width = SEL_SIZE; crop.height = SEL_SIZE;
+    crop.getContext('2d').drawImage(full, selX, selY, SEL_SIZE, SEL_SIZE, 0, 0, SEL_SIZE, SEL_SIZE);
+    const cropBlob = await new Promise((res, rej) => crop.toBlob(b => b ? res(b) : rej(new Error('Canvas export failed')), 'image/jpeg', 0.92));
+    const cropFile = new File([cropBlob], 'selection.jpg', { type: 'image/jpeg' });
+
+    const ph = document.createElement('canvas'); ph.width = w; ph.height = h;
+    const pc = ph.getContext('2d');
+    pc.fillStyle = 'rgba(80,80,80,0.5)'; pc.fillRect(selX, selY, SEL_SIZE, SEL_SIZE);
+    pc.font = 'bold 28px sans-serif'; pc.fillStyle = 'rgba(255,255,255,0.85)';
+    pc.textAlign = 'center'; pc.textBaseline = 'middle';
+    pc.fillText('Editing...', selX + SEL_SIZE / 2, selY + SEL_SIZE / 2);
+
+    const phImg = new Image(); phImg.src = ph.toDataURL();
+    await new Promise(r => { phImg.onload = r; });
+
+    placeholderIdx = editor.layers.length;
+    const pLayer = {
+      index: placeholderIdx, name: 'Editing...', image: phImg,
+      canvas: document.createElement('canvas'), hasMask: true,
+      maskCanvas: document.createElement('canvas'), maskHistory: [], visible: true, initialMaskState: 'visible'
+    };
+    pLayer.canvas.width = w; pLayer.canvas.height = h; pLayer.ctx = pLayer.canvas.getContext('2d');
+    pLayer.maskCanvas.width = w; pLayer.maskCanvas.height = h; pLayer.maskCtx = pLayer.maskCanvas.getContext('2d');
+    pLayer.maskCtx.fillStyle = '#ffffff'; pLayer.maskCtx.fillRect(0, 0, w, h);
+    editor.layers.push(pLayer);
+    editor.activeLayerIndex = placeholderIdx;
+    editor._regenerateLayerUI(); editor.render();
+
+    const fd = new FormData();
+    fd.append('images', cropFile);
+    refImages.forEach(f => fd.append('images', f));
+    fd.append('prompt', prompt);
+    fd.append('aspect_ratio', '1:1');
+    fd.append('resolution', nbpRes);
+    fd.append('temperature', '1');
+    fd.append('output_format', 'jpg');
+
+    const res = await fetch('/api/nb2-edit', { method: 'POST', body: fd });
+    const result = await res.json();
+    if (!res.ok || !result.success) throw new Error(result.message || result.error || 'Generation failed');
+
+    const resultData = 'data:' + result.generation.mime_type + ';base64,' + result.generation.image_base64;
+    const rImg = new Image(); rImg.src = resultData;
+    await new Promise((resolve, reject) => { rImg.onload = resolve; rImg.onerror = reject; });
+
+    const rc = document.createElement('canvas'); rc.width = w; rc.height = h;
+    rc.getContext('2d').drawImage(rImg, selX, selY, SEL_SIZE, SEL_SIZE);
+    const fImg = new Image(); fImg.src = rc.toDataURL();
+    await new Promise(r => { fImg.onload = r; });
+
+    const layer = editor.layers[placeholderIdx];
+    if (layer) { layer.name = 'AI Edit'; layer.image = fImg; editor._regenerateLayerUI(); editor.render(); }
+
+  } catch (err) {
+    console.error('Selection edit failed:', err);
+    if (placeholderIdx >= 0 && editor.layers[placeholderIdx]) {
+      editor.layers.splice(placeholderIdx, 1);
+      editor.activeLayerIndex = Math.max(0, editor.layers.length - 1);
+      editor._regenerateLayerUI(); editor.render();
+    }
+    toast('AI edit failed: ' + err.message);
+  }
+}
+
+// ── Initial load ──────────────────────────────────────────────────────
+refreshJobs();
+</script>
+
 </body>
 </html>
