@@ -1499,7 +1499,8 @@ async function refreshJobs() {
     const sorted = jobs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 20);
 
     state.jobs = [];
-    for (const job of sorted) {
+    // Iterate oldest-first so that unshift leaves newest at index 0
+    for (const job of sorted.slice().reverse()) {
       updateJobInState(job);
       if (job.status === 'processing' || job.status === 'queued') {
         startPolling(job.job_id);
