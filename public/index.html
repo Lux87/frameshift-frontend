@@ -485,39 +485,57 @@
     font-family: var(--font-mono);
   }
 
-  .results-grid {
+  .thumb-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 10px;
-    margin-top: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
   }
-  .result-item {
+  .thumb-card {
     position: relative;
     border-radius: var(--radius-xs);
     overflow: hidden;
-    background: var(--bg);
     border: 1px solid var(--border);
-  }
-  .result-item img {
-    width: 100%;
-    display: block;
     cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    background: var(--bg);
   }
-  .result-item .result-label {
-    padding: 6px 10px;
-    font-size: 11px;
-    color: var(--text3);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid var(--border);
+  .thumb-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .thumb-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    background: var(--surface-solid);
   }
-  .result-item .result-label a {
-    color: var(--primary);
+  .thumb-card .thumb-label {
+    font-size: 10px;
+    color: var(--text2);
+    padding: 4px 6px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: var(--surface);
+  }
+  .thumb-card .thumb-actions {
+    position: absolute;
+    top: 4px; right: 4px;
+    display: flex; gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .thumb-card:hover .thumb-actions { opacity: 1; }
+  .thumb-action-btn {
+    width: 24px; height: 24px;
+    border: none; border-radius: 4px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
     text-decoration: none;
-    font-weight: 500;
   }
-  .result-item .result-label a:hover { text-decoration: underline; }
+  .thumb-action-btn:hover { background: var(--primary); }
 
   .empty {
     text-align: center;
@@ -2474,11 +2492,25 @@ function updateJobInState(job) {
 async function loadDownloads(jobId) {
   try {
     const r = await fetch(`/api/downloads/${jobId}`);
-    const downloads = await r.json();
+    const data = await r.json();
+
+    const outputs = data && data.outputs ? data.outputs : {};
+    const downloads = {};
+    const gcsLinks = {};
+    for (const [name, info] of Object.entries(outputs)) {
+      if (info && typeof info === 'object') {
+        if (info.url) downloads[name] = info.url;
+        if (info.gcs) gcsLinks[name] = info.gcs;
+      } else if (typeof info === 'string') {
+        downloads[name] = info;
+      }
+    }
 
     const idx = state.jobs.findIndex(j => j.job_id === jobId);
     if (idx >= 0) {
       state.jobs[idx].downloads = downloads;
+      state.jobs[idx].gcsLinks = gcsLinks;
+      state.jobs[idx].gcsBucket = data && data.bucket ? data.bucket : null;
       renderJobs();
     }
   } catch {}
@@ -2550,11 +2582,27 @@ function renderJobs() {
     }
 
     if (job.downloads && Object.keys(job.downloads).length) {
-      html += `<div class="results-grid">`;
-      for (const [name, url] of Object.entries(job.downloads)) {
-        html += `<div class="result-item">`;
-        html += `<img src="${escAttr(url)}" alt="${escHtml(name)}" onclick="openLightbox('${escAttr(url)}')" loading="lazy">`;
-        html += `<div class="result-label"><span>${escHtml(name)}</span><a href="${escAttr(url)}" download>download</a></div>`;
+      const gcsLinks = job.gcsLinks || {};
+      const entries = Object.entries(job.downloads);
+      const originals = entries.filter(([k]) => k.includes('original'));
+      const showEntries = originals.length ? originals : entries;
+      const downloadIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+      const cloudIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>';
+
+      html += `<div class="thumb-grid">`;
+      for (const [name, url] of showEntries) {
+        const label = name.replace(/_/g, ' ').replace(' original', '');
+        const gcsUrl = gcsLinks[name] || null;
+        const cardClick = `openLightbox('${escAttr(url)}')`;
+        html += `<div class="thumb-card" onclick="${cardClick}">`;
+        html += `<img src="${escAttr(url)}" alt="${escHtml(name)}" loading="lazy">`;
+        html += `<div class="thumb-label">${escHtml(label)}</div>`;
+        html += `<div class="thumb-actions">`;
+        html += `<a class="thumb-action-btn" href="${escAttr(url)}" download onclick="event.stopPropagation()" title="Download">${downloadIcon}</a>`;
+        if (gcsUrl) {
+          html += `<a class="thumb-action-btn" href="${escAttr(gcsUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open in Google Cloud Storage">${cloudIcon}</a>`;
+        }
+        html += `</div>`;
         html += `</div>`;
       }
       html += `</div>`;
