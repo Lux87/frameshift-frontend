@@ -1444,6 +1444,15 @@ curl -s "$ENGINE_URL/process" \
             <strong>Two paths for every endpoint.</strong> <em>Engine</em> is the direct URL on <code>frameshift-local</code> (requires <code>Authorization: Bearer &lt;IAP token&gt;</code> + <code>X-Api-Key: fsk_...</code>). <em>Proxy</em> is the route this frontend exposes at <code>http://localhost:8080/...</code> — browser code calls that with no auth headers; the frontend server adds them.
           </div>
 
+          <h2 id="job-lifecycle">Job lifecycle</h2>
+          <p>Image generation is <strong>asynchronous</strong>. A single Gemini relight + wavelet detail transfer run takes 30–90&nbsp;seconds, longer than most HTTP timeouts, so <code>/process</code> returns a handle immediately and you fetch the actual images in two more steps.</p>
+          <ol class="steps">
+            <li><strong>Submit</strong> — <code>POST /process</code> returns <code>202</code> with a <code>job_id</code>. No images yet.</li>
+            <li><strong>Poll</strong> — <code>GET /jobs/:id</code> every 1–2&nbsp;seconds. While in flight, <code>status</code> is <code>queued</code> or <code>processing</code> and <code>progress</code> goes 0 → 100. Once <code>status === 'completed'</code> the response includes <code>result.downloads</code>, a map of output name → relative URL.</li>
+            <li><strong>Fetch</strong> — each URL in <code>result.downloads</code> points at <code>/download/:jobId/:filename</code> (or <code>/api/download/...</code> via the proxy). Those are the real image streams; <code>Content-Type: image/png</code>.</li>
+          </ol>
+          <p>If <code>status</code> becomes <code>failed</code>, <code>error</code> holds the reason and there is no <code>result</code> block. Jobs are tenant-scoped — polling a <code>job_id</code> created by another <code>fsk_</code> key returns <code>404</code>.</p>
+
           <h2>Auth headers</h2>
           <table class="param-table">
             <thead>
@@ -1550,7 +1559,7 @@ if (health.status === 'ok') console.log(`${health.active_jobs} jobs running`);</
               <span class="endpoint-proxy">proxy: /api/process</span>
             </div>
             <div class="endpoint-body">
-              <p class="endpoint-desc">Submit a full V2.1 pipeline job: preprocess → Gemini relight → wavelet detail transfer → post-process. Returns <code>202</code> immediately with a <code>job_id</code>; poll <code>/jobs/:id</code> until completion.</p>
+              <p class="endpoint-desc">Submit a full V2.1 pipeline job: preprocess → Gemini relight → wavelet detail transfer → post-process. <strong>Async</strong> — returns <code>202</code> immediately with a <code>job_id</code> and <em>no images</em>. To get the images, poll <code>/jobs/:id</code> until <code>status === 'completed'</code> and then fetch the URLs in <code>result.downloads</code>. See <a href="#job-lifecycle">Job lifecycle</a> at the top of this page.</p>
 
               <h3>Request (multipart/form-data)</h3>
               <table class="param-table">
