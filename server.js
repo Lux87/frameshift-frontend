@@ -267,18 +267,36 @@ app.post('/api/nb2-edit', nb2Upload.array('images', 13), async (req, res) => {
 });
 
 // ── Download URLs for a job ─────────────────────────────────────────────────
+// Engine returns { bucket, outputs: { name: { url, gcs, gcsPath } } }.
+// We rewrite each output's `url` (engine-proxy path) to the frontend's
+// /api/download proxy path so browser fetches go through this service,
+// and we pass `gcs` (the direct Google Cloud Storage URL) through untouched
+// so the UI can render a direct "open in bucket" link.
 app.get('/api/downloads/:jobId', async (req, res) => {
   try {
     const resp = await proxyToEngine(`/api/downloads/${req.params.jobId}`);
     const data = await resp.json();
 
-    const remapped = {};
-    for (const [name, enginePath] of Object.entries(data)) {
-      const parts = enginePath.split('/');
+    const outputs = {};
+    const engineOutputs = data && typeof data === 'object' && data.outputs && typeof data.outputs === 'object'
+      ? data.outputs
+      : {};
+
+    for (const [name, info] of Object.entries(engineOutputs)) {
+      if (!info || typeof info !== 'object' || !info.url) continue;
+      const parts = String(info.url).split('/');
       const filename = parts[parts.length - 1];
-      remapped[name] = `/api/download/${req.params.jobId}/${filename}`;
+      outputs[name] = {
+        url: `/api/download/${req.params.jobId}/${filename}`,
+        gcs: info.gcs || null,
+        gcsPath: info.gcsPath || null,
+      };
     }
-    res.json(remapped);
+
+    res.json({
+      bucket: data && data.bucket ? data.bucket : null,
+      outputs,
+    });
   } catch (err) {
     res.status(errorStatus(err)).json({ error: err.message });
   }
