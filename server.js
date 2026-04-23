@@ -172,6 +172,7 @@ app.post('/api/process', upload.fields([
 
     if (req.body.mode) formData.append('mode', req.body.mode);
     if (req.body.action_prompt) formData.append('action_prompt', req.body.action_prompt);
+    if (req.body.webhook_url) formData.append('webhook_url', req.body.webhook_url);
 
     for (const field of ['product_image', 'background_image', 'detailing_mask']) {
       if (req.files?.[field]?.[0]) {

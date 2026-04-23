@@ -1470,6 +1470,7 @@ curl -s "$ENGINE_URL/process" \
             <li><strong>Fetch</strong> — each URL in <code>result.downloads</code> points at <code>/download/:jobId/:filename</code> (or <code>/api/download/...</code> via the proxy). Those are the real image streams; <code>Content-Type: image/png</code>.</li>
           </ol>
           <p>If <code>status</code> becomes <code>failed</code>, <code>error</code> holds the reason and there is no <code>result</code> block. Jobs are tenant-scoped — polling a <code>job_id</code> created by another <code>fsk_</code> key returns <code>404</code>.</p>
+          <p><strong>Prefer push?</strong> Pass a <code>webhook_url</code> when you submit the job and the engine will <code>POST</code> a signed payload to that URL as soon as it finishes — no polling required. See <a href="#webhooks">Webhooks</a>.</p>
 
           <h2>Auth headers</h2>
           <table class="param-table">
@@ -1610,6 +1611,11 @@ if (health.status === 'ok') console.log(`${health.active_jobs} jobs running`);</
                     <td>text</td>
                     <td>Freeform prompt — appended to scene description in most modes, used raw in <code>prompt-raw</code></td>
                   </tr>
+                  <tr>
+                    <td>webhook_url</td>
+                    <td>text</td>
+                    <td>Optional <code>https://</code> URL. The engine <code>POST</code>s a signed JSON payload here when the job reaches <code>completed</code> or <code>failed</code>, so you don't have to poll. See <a href="#webhooks">Webhooks</a> below.</td>
+                  </tr>
                 </tbody>
               </table>
 
@@ -1708,6 +1714,7 @@ const { job_id } = await fetch('/api/process', {
                 <tbody>
                   <tr><td>product_image <span class="req-badge">required</span></td><td>file</td><td>Original product image</td></tr>
                   <tr><td>relight_image <span class="req-badge">required</span></td><td>file</td><td>Pre-generated relight output; must match <code>product_image</code> dimensions</td></tr>
+                  <tr><td>webhook_url</td><td>text</td><td>Optional <code>https://</code> URL for completion notification — see <a href="#webhooks">Webhooks</a>.</td></tr>
                 </tbody>
               </table>
 
@@ -1727,6 +1734,119 @@ const { job_id } = await fetch('/api/process', {
   -F "relight_image=@./ai-relight.png"</code></pre>
               </div>
             </div>
+          </div>
+
+          <h2 id="webhooks">Webhooks</h2>
+          <p>Instead of polling <code>/jobs/:id</code>, pass an optional <code>webhook_url</code> when you submit the job (<code>/process</code> or <code>/detail-transfer</code>). The engine <code>POST</code>s a signed JSON payload to that URL the moment the job reaches a terminal state — <code>completed</code> or <code>failed</code>.</p>
+
+          <h3>Delivery</h3>
+          <ul>
+            <li><strong>Method:</strong> <code>POST</code>, <code>Content-Type: application/json</code>.</li>
+            <li><strong>Timeout per attempt:</strong> 10&nbsp;seconds.</li>
+            <li><strong>Retries:</strong> up to 4 attempts with backoff (~0s, 2s, 10s, 60s). Any non-2xx or network error triggers a retry.</li>
+            <li><strong>Best effort, in-process.</strong> If the engine restarts mid-retry the delivery is lost — keep <code>GET /jobs/:id</code> as a fallback if you need strict reliability.</li>
+            <li><strong>Must be <code>https://</code>.</strong> Plain <code>http</code> URLs are rejected at submit time.</li>
+          </ul>
+
+          <h3>Headers the engine sends</h3>
+          <table class="param-table">
+            <thead>
+              <tr><th>Header</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>X-Frameshift-Event</code></td><td><code>job.completed</code> or <code>job.failed</code></td></tr>
+              <tr><td><code>X-Frameshift-Job-Id</code></td><td>The job id — lets you look up extra state via <code>/jobs/:id</code> if you need it.</td></tr>
+              <tr><td><code>X-Frameshift-Timestamp</code></td><td>Unix timestamp (seconds) when the delivery was signed. Use to reject very old replays.</td></tr>
+              <tr><td><code>X-Frameshift-Signature</code></td><td><code>sha256=&lt;hex&gt;</code> HMAC-SHA256 of the raw request body. Only sent when the engine is started with a <code>FRAMESHIFT_WEBHOOK_SECRET</code>. Ask your engine operator for the secret.</td></tr>
+              <tr><td><code>User-Agent</code></td><td><code>frameshift-webhook/1.0</code></td></tr>
+            </tbody>
+          </table>
+
+          <h3>Payload — <code>job.completed</code></h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-label">JSON</span>
+              <button class="copy-btn" data-copy="ep-webhook-ok">Copy</button>
+            </div>
+<pre id="ep-webhook-ok"><code>{
+  "event": "job.completed",
+  "job_id": "job_1771234567890_abc123x",
+  "status": "completed",
+  "mode": "2d",
+  "created_at": "2026-04-23T14:12:03.118Z",
+  "completed_at": "2026-04-23T14:12:48.902Z",
+  "duration_seconds": 45,
+  "bucket": "my-frameshift-outputs",
+  "outputs": {
+    "final_original": {
+      "url": "/download/job_1771234567890_abc123x/final.png",
+      "gcs": "https://storage.cloud.google.com/my-frameshift-outputs/frameshift/jobs/job_1771234567890_abc123x/final.png",
+      "gcsPath": "frameshift/jobs/job_1771234567890_abc123x/final.png"
+    }
+  }
+}</code></pre>
+          </div>
+          <p><code>outputs</code> matches what <code>GET /api/downloads/:jobId</code> returns, so you can share rendering code between the webhook handler and the polling fallback. <code>url</code> is the engine-proxied download (still needs IAP + your API key to fetch). <code>gcs</code> is the direct Google Cloud Storage URL and is <code>null</code> when GCS isn't configured. <code>bucket</code> is <code>null</code> in that case too.</p>
+
+          <h3>Payload — <code>job.failed</code></h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-label">JSON</span>
+              <button class="copy-btn" data-copy="ep-webhook-fail">Copy</button>
+            </div>
+<pre id="ep-webhook-fail"><code>{
+  "event": "job.failed",
+  "job_id": "job_1771234567890_abc123x",
+  "status": "failed",
+  "mode": "2d",
+  "created_at": "2026-04-23T14:12:03.118Z",
+  "completed_at": "2026-04-23T14:12:11.004Z",
+  "duration_seconds": 8,
+  "error": { "message": "Gemini upstream returned 500" }
+}</code></pre>
+          </div>
+
+          <h3>Verifying the signature (Node.js)</h3>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-label">JavaScript</span>
+              <button class="copy-btn" data-copy="ep-webhook-verify">Copy</button>
+            </div>
+<pre id="ep-webhook-verify"><code>import crypto from 'node:crypto';
+import express from 'express';
+
+const app = express();
+
+app.post('/webhook',
+  express.raw({ type: 'application/json' }),
+  (req, res) =&gt; {
+    const sig = req.get('X-Frameshift-Signature') || '';
+    const expected =
+      'sha256=' +
+      crypto
+        .createHmac('sha256', process.env.FRAMESHIFT_WEBHOOK_SECRET)
+        .update(req.body)
+        .digest('hex');
+
+    if (sig.length !== expected.length ||
+        !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+      return res.status(401).end();
+    }
+
+    const payload = JSON.parse(req.body.toString('utf8'));
+    // handle payload.event / payload.outputs / payload.error
+    res.status(200).end();
+  });</code></pre>
+          </div>
+          <p>Always sign the <strong>raw</strong> request body — whitespace and key order matter, so don't re-serialise. Use <code>timingSafeEqual</code> to avoid timing oracles.</p>
+
+          <div class="doc-callout">
+            <strong>Expectations on your endpoint:</strong>
+            <ul>
+              <li>Respond with a 2xx status in under 10&nbsp;seconds. Do any heavy work in a background queue on your side.</li>
+              <li>Treat deliveries as <em>at-least-once</em> — a flaky 2xx response on your end can cause a retry. Dedupe on <code>job_id</code> + <code>event</code>.</li>
+              <li>Only trust requests that pass the signature check (when a secret is configured). Otherwise treat the webhook purely as a nudge to call <code>GET /jobs/:id</code> yourself.</li>
+            </ul>
           </div>
 
           <h2>GET /jobs</h2>
