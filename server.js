@@ -2,7 +2,13 @@ import 'dotenv/config';
 import express from 'express';
 import multer from 'multer';
 import { GoogleAuth } from 'google-auth-library';
-import { readFileSync } from 'fs';
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  unlinkSync,
+} from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -10,16 +16,48 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const PORT = parseInt(process.env.PORT) || 8080;
 
-let config = {
-  engineUrl: process.env.ENGINE_URL?.replace(/\/$/, '') || '',
-  apiKey: process.env.FRAMESHIFT_API_KEY || '',
-  iapClientId: process.env.IAP_CLIENT_ID || '',
-  saKeyPath: process.env.GOOGLE_SA_KEY_PATH || '',
-  saEmail: null,
-};
+// ── Persistent data dir ──────────────────────────────────────────────────────
+// Runtime settings (engine URL, API key, IAP client id, SA key path) are
+// persisted here so the frontend can be deployed with zero env vars and
+// configured through the UI afterwards. On Cloud Run this directory is
+// per-instance and lost on cold start — see IMPLEMENTATION-GUIDE.md.
+const dataDir = join(__dirname, 'data');
+mkdirSync(dataDir, { recursive: true });
+const configPath = join(dataDir, 'config.json');
 
-if (!config.engineUrl) throw new Error('ENGINE_URL is required');
-if (!config.apiKey) throw new Error('FRAMESHIFT_API_KEY is required');
+function readPersisted() {
+  try {
+    return JSON.parse(readFileSync(configPath, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function savePersisted(cfg) {
+  const toWrite = {
+    engineUrl: cfg.engineUrl || '',
+    apiKey: cfg.apiKey || '',
+    iapClientId: cfg.iapClientId || '',
+    saKeyPath: cfg.saKeyPath || '',
+  };
+  writeFileSync(configPath, JSON.stringify(toWrite, null, 2));
+}
+
+// Config resolution order: persisted settings win, env vars act as a seed.
+// This means an operator can pre-seed with env vars on deploy, but the UI
+// can always override at runtime.
+function loadConfig() {
+  const persisted = readPersisted();
+  return {
+    engineUrl: (persisted.engineUrl || process.env.ENGINE_URL || '').replace(/\/$/, ''),
+    apiKey: persisted.apiKey || process.env.FRAMESHIFT_API_KEY || '',
+    iapClientId: persisted.iapClientId || process.env.IAP_CLIENT_ID || '',
+    saKeyPath: persisted.saKeyPath || process.env.GOOGLE_SA_KEY_PATH || '',
+    saEmail: null,
+  };
+}
+
+let config = loadConfig();
 
 let auth = null;
 
@@ -63,7 +101,18 @@ async function getIapHeaders() {
   }
 }
 
+class NotConfiguredError extends Error {
+  constructor(missing) {
+    super(`Frontend is not configured — set ${missing} in Settings.`);
+    this.code = 'NOT_CONFIGURED';
+    this.status = 503;
+  }
+}
+
 async function proxyToEngine(path, options = {}) {
+  if (!config.engineUrl) throw new NotConfiguredError('Engine URL');
+  if (!config.apiKey) throw new NotConfiguredError('API Key');
+
   const url = `${config.engineUrl}${path}`;
   const iapHeaders = await getIapHeaders();
 
@@ -84,13 +133,16 @@ async function proxyToEngine(path, options = {}) {
   return resp;
 }
 
+function errorStatus(err) {
+  return err.code === 'NOT_CONFIGURED' ? 503 : 502;
+}
+
 const app = express();
 app.use(express.json());
 
 app.use(express.static(join(__dirname, 'public')));
 
 const uploadsDir = join(__dirname, 'uploads');
-import { mkdirSync } from 'fs';
 mkdirSync(uploadsDir, { recursive: true });
 
 const upload = multer({
@@ -105,7 +157,7 @@ app.get('/api/health', async (req, res) => {
     const data = await resp.json();
     res.status(resp.status).json(data);
   } catch (err) {
-    res.status(502).json({ error: `Engine unreachable: ${err.message}` });
+    res.status(errorStatus(err)).json({ error: err.message });
   }
 });
 
@@ -124,10 +176,9 @@ app.post('/api/process', upload.fields([
     for (const field of ['product_image', 'background_image', 'detailing_mask']) {
       if (req.files?.[field]?.[0]) {
         const file = req.files[field][0];
-        const { readFileSync: rfs, unlinkSync } = await import('fs');
-        const buf = rfs(file.path);
+        const buf = readFileSync(file.path);
         formData.append(field, new Blob([buf], { type: file.mimetype }), file.originalname);
-        unlinkSync(file.path);
+        try { unlinkSync(file.path); } catch {}
       }
     }
 
@@ -139,7 +190,7 @@ app.post('/api/process', upload.fields([
     const data = await resp.json();
     res.status(resp.status).json(data);
   } catch (err) {
-    res.status(502).json({ error: `Failed to submit job: ${err.message}` });
+    res.status(errorStatus(err)).json({ error: err.message });
   }
 });
 
@@ -150,7 +201,7 @@ app.get('/api/jobs', async (req, res) => {
     const data = await resp.json();
     res.status(resp.status).json(data);
   } catch (err) {
-    res.status(502).json({ error: `Engine unreachable: ${err.message}` });
+    res.status(errorStatus(err)).json({ error: err.message });
   }
 });
 
@@ -160,7 +211,7 @@ app.get('/api/jobs/:id', async (req, res) => {
     const data = await resp.json();
     res.status(resp.status).json(data);
   } catch (err) {
-    res.status(502).json({ error: `Engine unreachable: ${err.message}` });
+    res.status(errorStatus(err)).json({ error: err.message });
   }
 });
 
@@ -179,7 +230,7 @@ app.get('/api/download/:jobId/:filename', async (req, res) => {
     const arrayBuf = await resp.arrayBuffer();
     res.send(Buffer.from(arrayBuf));
   } catch (err) {
-    res.status(502).json({ error: `Download failed: ${err.message}` });
+    res.status(errorStatus(err)).json({ error: err.message });
   }
 });
 
@@ -191,7 +242,6 @@ const nb2Upload = multer({
 
 app.post('/api/nb2-edit', nb2Upload.array('images', 13), async (req, res) => {
   try {
-    const { readFileSync: rfs, unlinkSync } = await import('fs');
     const formData = new FormData();
 
     for (const field of ['prompt', 'aspect_ratio', 'resolution', 'temperature', 'output_format']) {
@@ -199,7 +249,7 @@ app.post('/api/nb2-edit', nb2Upload.array('images', 13), async (req, res) => {
     }
 
     for (const file of req.files || []) {
-      const buf = rfs(file.path);
+      const buf = readFileSync(file.path);
       formData.append('images', new Blob([buf], { type: file.mimetype }), file.originalname);
       try { unlinkSync(file.path); } catch {}
     }
@@ -212,7 +262,7 @@ app.post('/api/nb2-edit', nb2Upload.array('images', 13), async (req, res) => {
     const data = await resp.json().catch(() => ({}));
     res.status(resp.status).json(data);
   } catch (err) {
-    res.status(502).json({ error: `Failed to edit selection: ${err.message}` });
+    res.status(errorStatus(err)).json({ error: err.message });
   }
 });
 
@@ -230,7 +280,7 @@ app.get('/api/downloads/:jobId', async (req, res) => {
     }
     res.json(remapped);
   } catch (err) {
-    res.status(502).json({ error: `Engine unreachable: ${err.message}` });
+    res.status(errorStatus(err)).json({ error: err.message });
   }
 });
 
@@ -244,6 +294,7 @@ app.get('/api/settings', (req, res) => {
     iap_enabled: !!config.iapClientId,
     sa_key_path: config.saKeyPath || '',
     sa_email: config.saEmail || '',
+    configured: !!(config.engineUrl && config.apiKey),
   });
 });
 
@@ -265,7 +316,15 @@ app.put('/api/settings', (req, res) => {
     changed = true;
   }
 
-  if (changed) console.log('[settings] Config updated via UI');
+  if (changed) {
+    try {
+      savePersisted(config);
+      console.log('[settings] Config updated and persisted to data/config.json');
+    } catch (err) {
+      console.error(`[settings] Failed to persist config: ${err.message}`);
+      return res.status(500).json({ error: `Failed to persist: ${err.message}` });
+    }
+  }
 
   res.json({ ok: true });
 });
@@ -276,22 +335,27 @@ app.post('/api/settings/sa-key', saUpload.single('sa_key'), async (req, res) => 
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-    const { readFileSync: rfs, writeFileSync, unlinkSync } = await import('fs');
-    const raw = rfs(req.file.path, 'utf8');
+    const raw = readFileSync(req.file.path, 'utf8');
     const keyData = JSON.parse(raw);
 
     if (!keyData.client_email || !keyData.private_key) {
-      unlinkSync(req.file.path);
+      try { unlinkSync(req.file.path); } catch {}
       return res.status(400).json({ error: 'Invalid service account key — missing client_email or private_key' });
     }
 
     const destName = `${keyData.client_email.split('@')[0]}-sa-key.json`;
-    const destPath = join(__dirname, destName);
+    const destPath = join(dataDir, destName);
     writeFileSync(destPath, JSON.stringify(keyData, null, 2));
-    unlinkSync(req.file.path);
+    try { unlinkSync(req.file.path); } catch {}
 
-    config.saKeyPath = `./${destName}`;
+    // Remove the previous SA key on disk (if any) to avoid stale files
+    if (config.saKeyPath && config.saKeyPath !== destPath && existsSync(config.saKeyPath)) {
+      try { unlinkSync(config.saKeyPath); } catch {}
+    }
+
+    config.saKeyPath = destPath;
     initIapAuth();
+    savePersisted(config);
 
     console.log(`[settings] SA key uploaded: ${keyData.client_email}`);
     res.json({ ok: true, sa_email: keyData.client_email, sa_key_path: config.saKeyPath });
@@ -302,6 +366,12 @@ app.post('/api/settings/sa-key', saUpload.single('sa_key'), async (req, res) => 
 
 app.post('/api/settings/test', async (req, res) => {
   try {
+    if (!config.engineUrl) {
+      return res.json({ ok: false, error: 'Engine URL not set', engine_url: '', iap_used: false });
+    }
+    if (!config.apiKey) {
+      return res.json({ ok: false, error: 'API key not set', engine_url: config.engineUrl, iap_used: false });
+    }
     const iapHeaders = await getIapHeaders();
     const resp = await fetch(`${config.engineUrl}/health`, {
       headers: { ...iapHeaders, 'X-Api-Key': config.apiKey },
@@ -329,6 +399,12 @@ initIapAuth();
 
 app.listen(PORT, () => {
   console.log(`\nFrameShift Frontend running on http://localhost:${PORT}`);
-  console.log(`Engine: ${config.engineUrl}`);
-  console.log(`IAP: ${config.iapClientId ? 'enabled' : 'disabled (direct mode)'}\n`);
+  console.log(`Engine:  ${config.engineUrl || '(not configured — set via Settings)'}`);
+  console.log(`API key: ${config.apiKey ? 'set' : '(not configured — set via Settings)'}`);
+  console.log(`IAP:     ${config.iapClientId ? 'enabled' : 'disabled (direct mode)'}`);
+  if (!config.engineUrl || !config.apiKey) {
+    console.log('\n→ Open the UI and fill in Settings to finish configuration.\n');
+  } else {
+    console.log('');
+  }
 });

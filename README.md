@@ -1,43 +1,48 @@
 # FrameShift Frontend
 
-Test frontend for the FrameShift Engine API. Handles IAP authentication and proxies requests to the engine.
+Thin Express proxy + browser UI for the FrameShift Engine. Handles IAP
+authentication and the engine API key server‑side so the browser never
+touches credentials.
 
-## Setup
+## Quick start
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+npm start
+```
 
-2. Copy `.env.example` to `.env` and fill in:
-   ```bash
-   cp .env.example .env
-   ```
+Then open `http://localhost:8080` and fill in **Settings**:
 
-   - `ENGINE_URL` — the IAP-protected engine domain (e.g. `https://frameshift-engine.com`)
-   - `FRAMESHIFT_API_KEY` — API key generated from the engine dashboard (`fsk_...`)
-   - `GOOGLE_SA_KEY_PATH` — path to a GCP service account JSON key with IAP access
-   - `IAP_CLIENT_ID` — the OAuth client ID used for IAP on the backend service
+- **Engine URL** — the engine's IAP‑protected domain (e.g. `https://frameshift-engine.com`)
+- **API Key** — `fsk_…` key from the engine dashboard
+- **IAP Client ID** — OAuth client ID of the engine's IAP backend (leave empty for direct mode)
+- **Service Account Key** — upload a GCP service account `.json` with IAP access (or leave empty to use Application Default Credentials)
 
-3. Place the service account key file (e.g. `sa-key.json`) in the project root.
+Click **Save**, then **Test connection**.
 
-4. Start the server:
-   ```bash
-   npm start
-   # or with auto-reload:
-   npm run dev
-   ```
+No environment variables are required. Everything is configurable at runtime.
 
-5. Open `http://localhost:8080` in your browser.
+## Optional: seed via env vars
 
-## GCP Prerequisites
+If you'd rather pre‑configure on deploy, any value set in `.env` (or via
+`--set-env-vars` on Cloud Run) is used as an initial default. The UI can
+still override anything at runtime. See `.env.example`.
 
-The service account needs:
-- **IAP-secured Web App User** (`roles/iap.httpsResourceAccessUser`) on the engine's backend service
+## Runtime configuration storage
 
-The API key needs to be generated from the engine's admin dashboard (API Keys tab).
+UI changes are persisted to `data/config.json` and survive process restarts.
+Uploaded SA key files are stored in `data/<sa>-sa-key.json`.
 
-## How It Works
+On **Cloud Run** the container filesystem is ephemeral — configuration
+entered in the UI is lost on cold start. For Cloud Run deployments either:
+
+- Keep `--min-instances=1` so the instance stays warm, or
+- Seed the config via env vars on deploy (see `.env.example`).
+
+See [IMPLEMENTATION-GUIDE.md](./IMPLEMENTATION-GUIDE.md) for full deployment
+details (Cloud Run, local, rotating credentials, troubleshooting).
+
+## How it works
 
 ```
 Browser → Frontend (localhost:8080)
@@ -47,4 +52,13 @@ Browser → Frontend (localhost:8080)
   → Results stream back through the proxy
 ```
 
-The frontend never exposes credentials to the browser. All IAP and API key authentication happens server-side.
+## What you need from the engine operator
+
+1. `ENGINE_URL` — the IAP‑protected engine domain
+2. `IAP_CLIENT_ID` — OAuth client ID of the engine's IAP backend service
+3. `FRAMESHIFT_API_KEY` — an `fsk_…` key issued to your tenant
+4. Either an attached Cloud Run SA (same GCP project as the engine) **or** a
+   GCP service account JSON key that has `IAP-secured Web App User` on the
+   engine's backend service
+
+See [IMPLEMENTATION-GUIDE.md](./IMPLEMENTATION-GUIDE.md) for the full flow.

@@ -5,3 +5,4 @@ sa-key.json
 gen-lang-client-*.json
 *.json.bak
 uploads/
+data/
