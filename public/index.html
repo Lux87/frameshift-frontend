@@ -1463,6 +1463,46 @@ curl -s "$ENGINE_URL/process" \
             </tbody>
           </table>
 
+          <h2>Errors</h2>
+          <p>Every error response is JSON with a single <code>error</code> string. Codes the engine uses:</p>
+          <table class="param-table">
+            <thead>
+              <tr><th>Status</th><th>When</th><th>Body</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>400</code></td>
+                <td>Bad request — missing / invalid field (e.g. unknown <code>mode</code>, missing <code>product_image</code>, missing <code>background_image</code> on a mode that requires one).</td>
+                <td><code>{"error":"Mode must be one of: 2d, cgi, cgi-topview, overlay, lite, prompt, prompt-raw"}</code></td>
+              </tr>
+              <tr>
+                <td><code>401</code></td>
+                <td>Missing or invalid <code>X-Api-Key</code>, or IAP rejected the <code>Authorization</code> header (the latter happens at the load balancer before the engine is reached, so the body may be Google's HTML page instead of JSON).</td>
+                <td><code>{"error":"Authentication required"}</code></td>
+              </tr>
+              <tr>
+                <td><code>404</code></td>
+                <td>Job id doesn't exist, or exists but belongs to a different tenant (we don't leak that distinction), or a download file is gone.</td>
+                <td><code>{"error":"Job not found"}</code></td>
+              </tr>
+              <tr>
+                <td><code>429</code></td>
+                <td>Per-key rate limit tripped. Retry with exponential backoff.</td>
+                <td><code>{"error":"Too many requests, try again later"}</code></td>
+              </tr>
+              <tr>
+                <td><code>500</code></td>
+                <td>Unhandled error inside the engine — Gemini failure, storage failure, bad input that got past validation. The <code>error</code> string is the raw exception message; don't parse it.</td>
+                <td><code>{"error":"&lt;raw message&gt;"}</code></td>
+              </tr>
+              <tr>
+                <td><code>501</code></td>
+                <td>Admin auth isn't configured on the engine. You will only see this on admin-only routes, which a frontend shouldn't be calling anyway.</td>
+                <td><code>{"error":"Auth not configured."}</code></td>
+              </tr>
+            </tbody>
+          </table>
+
           <h2>GET /health</h2>
           <div class="endpoint">
             <div class="endpoint-header">
@@ -1521,7 +1561,7 @@ if (health.status === 'ok') console.log(`${health.active_jobs} jobs running`);</
                   <tr>
                     <td>mode <span class="req-badge">required</span></td>
                     <td>text</td>
-                    <td>One of <code>2d</code>, <code>cgi</code>, <code>cgi-topview</code>, <code>overlay</code>, <code>lite</code>, <code>prompt</code>, <code>prompt-raw</code></td>
+                    <td>Pipeline variant — see <a href="#modes-table">Modes</a> below.</td>
                   </tr>
                   <tr>
                     <td>product_image <span class="req-badge">required</span></td>
@@ -1542,6 +1582,51 @@ if (health.status === 'ok') console.log(`${health.active_jobs} jobs running`);</
                     <td>action_prompt</td>
                     <td>text</td>
                     <td>Freeform prompt — appended to scene description in most modes, used raw in <code>prompt-raw</code></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h3 id="modes-table">Modes</h3>
+              <p>Each mode is a preset of scene-analysis prompt + relight prompt + pipeline shape. Pick based on what the <em>product</em> image is (photo vs CGI) and whether you have a real background to blend into.</p>
+              <table class="param-table">
+                <thead>
+                  <tr><th>Mode</th><th>Needs bg?</th><th>What it does</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>2d</code></td>
+                    <td>yes</td>
+                    <td>Default. Gemini describes the background (sky, floor, architecture) and relights the product into that scene. Product is assumed to already be a photo — prompt only asks to preserve position and camera.</td>
+                  </tr>
+                  <tr>
+                    <td><code>cgi</code></td>
+                    <td>yes</td>
+                    <td>Same scene analysis as <code>2d</code>, but the relight prompt is tuned for CGI input — explicitly asks to remove the "3D software" look, add material definition and realistic reflections. Use when <code>product_image</code> is a render.</td>
+                  </tr>
+                  <tr>
+                    <td><code>cgi-topview</code></td>
+                    <td>yes</td>
+                    <td>Top-down camera variant of <code>cgi</code>. Scene analysis only describes the lower surface (road, countertop, floor) with "on a …" phrasing rather than "in a …". Use for overhead product shots.</td>
+                  </tr>
+                  <tr>
+                    <td><code>overlay</code></td>
+                    <td>yes</td>
+                    <td>Skips scene analysis entirely. Feeds product + background straight to the relight model and asks for a seamless blend, preserving product position and background colors. Faster, cheaper, and more literal — use when the background is already exactly what you want and you don't want Gemini re-interpreting it.</td>
+                  </tr>
+                  <tr>
+                    <td><code>lite</code></td>
+                    <td>yes</td>
+                    <td>Same prompts as <code>2d</code>, but runs the short pipeline (2 outputs instead of the full set) — no GCS upload of intermediates, fewer wavelet levels. Use for previews or batch work where you don't need every debug image.</td>
+                  </tr>
+                  <tr>
+                    <td><code>prompt</code></td>
+                    <td>no</td>
+                    <td>No background image. Gemini generates a scene around the product from your <code>action_prompt</code>, with the standard "keep camera / don't alter product" guardrails appended.</td>
+                  </tr>
+                  <tr>
+                    <td><code>prompt-raw</code></td>
+                    <td>no</td>
+                    <td>Like <code>prompt</code> but with zero guardrails — your <code>action_prompt</code> is sent verbatim as the only instruction. Full control, full responsibility for protecting the product shape yourself.</td>
                   </tr>
                 </tbody>
               </table>
