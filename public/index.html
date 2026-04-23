@@ -759,6 +759,263 @@
     .blend-actions { top: 10px; left: 10px; flex-direction: row; }
   }
 
+  /* ── Documentation ─────────────────────────────────────── */
+  .doc-content h2 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 28px 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-content h2:first-child { margin-top: 0; }
+  .doc-content h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 18px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .doc-content p { color: var(--text2); margin-bottom: 12px; line-height: 1.6; font-size: 13px; }
+  .doc-content ul, .doc-content ol {
+    color: var(--text2);
+    padding-left: 22px;
+    margin-bottom: 14px;
+    line-height: 1.6;
+    font-size: 13px;
+  }
+  .doc-content li { margin-bottom: 4px; }
+  .doc-content strong { color: var(--text); font-weight: 600; }
+  .doc-content code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: rgba(255,255,255,0.04);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .endpoint {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .endpoint-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+    flex-wrap: wrap;
+  }
+  .method-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+  }
+  .method-get { background: rgba(59,130,246,0.15); color: #60A5FA; }
+  .method-post { background: rgba(16,185,129,0.15); color: #34D399; }
+  .method-delete { background: rgba(239,68,68,0.15); color: #F87171; }
+
+  .endpoint-path {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+    word-break: break-all;
+    flex: 1;
+    min-width: 0;
+  }
+  .endpoint-proxy {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text3);
+    background: rgba(255,255,255,0.03);
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .endpoint-body { padding: 16px; }
+  .endpoint-desc {
+    color: var(--text2);
+    font-size: 13px;
+    line-height: 1.55;
+    margin-bottom: 14px;
+  }
+
+  .param-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 14px;
+    background: rgba(255,255,255,0.015);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    overflow: hidden;
+  }
+  .param-table th, .param-table td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .param-table th {
+    font-weight: 600;
+    color: var(--text3);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: rgba(255,255,255,0.02);
+  }
+  .param-table td { color: var(--text2); }
+  .param-table td:first-child {
+    font-family: var(--font-mono);
+    color: var(--text);
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .param-table tr:last-child td { border-bottom: none; }
+  .req-badge {
+    display: inline-block;
+    background: rgba(239,68,68,0.12);
+    color: var(--danger);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-left: 6px;
+    font-family: var(--font);
+    letter-spacing: 0.2px;
+  }
+
+  .code-block {
+    background: #0a0a0c;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+  }
+  .code-block-label {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-size: 11px;
+    padding: 3px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: var(--font);
+    font-weight: 500;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--border-hover); }
+  .copy-btn.copied { color: var(--success); border-color: rgba(16,185,129,0.4); }
+  .code-block pre {
+    margin: 0;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .code-block pre code { background: none; border: none; padding: 0; font-size: inherit; color: inherit; }
+
+  .doc-callout {
+    padding: 12px 14px;
+    border-radius: var(--radius-xs);
+    background: var(--primary-glow);
+    border: 1px solid rgba(59,130,246,0.25);
+    color: var(--text2);
+    font-size: 12px;
+    margin-bottom: 16px;
+    line-height: 1.55;
+  }
+  .doc-callout strong { color: var(--text); }
+
+  .doc-callout-warn {
+    background: var(--warning-bg);
+    border-color: rgba(245,158,11,0.3);
+  }
+
+  .steps {
+    counter-reset: step;
+    padding-left: 0;
+    list-style: none;
+  }
+  .steps > li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 36px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+  .steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-glow);
+    border: 1px solid rgba(59,130,246,0.3);
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font);
+  }
+  .steps > li strong { color: var(--text); }
+
+  .endpoint-meta-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+  .endpoint-meta-row .label {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--text3);
+  }
+
+  @media (max-width: 700px) {
+    .endpoint-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .endpoint-proxy { margin-left: 0; }
+  }
+
   /* ── Toast ─────────────────────────────────────────────── */
   .toast {
     position: fixed;
@@ -830,6 +1087,16 @@
     <button class="nav-item" data-tab="connection" onclick="switchTab('connection')">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       Connection
+    </button>
+
+    <div class="nav-section-label">Documentation</div>
+    <button class="nav-item" data-tab="quickstart" onclick="switchTab('quickstart')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Quick Start
+    </button>
+    <button class="nav-item" data-tab="endpoints" onclick="switchTab('endpoints')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Endpoints
     </button>
   </nav>
 
@@ -1002,6 +1269,599 @@
       </div>
     </div>
 
+    <!-- ═══ QUICK START TAB ═══ -->
+    <div id="quickstart-tab" style="display:none">
+      <div class="page-header">
+        <div>
+          <h1>Quick Start</h1>
+          <p>Get a job submitted and downloaded in under 30 lines of code.</p>
+        </div>
+        <button class="btn-ghost btn-sm" onclick="switchTab('endpoints')">Full reference</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-body doc-content">
+          <h2>1. Configure the connection</h2>
+          <p>Before anything works, fill in the four values on the <a href="#" onclick="switchTab('connection');return false;">Connection</a> page and hit <strong>Save</strong>, then <strong>Test connection</strong>.</p>
+
+          <ol class="steps">
+            <li><strong>Engine URL</strong> — the IAP-protected engine domain, e.g. <code>https://audi-frameshift-engine.com</code>.</li>
+            <li><strong>API Key</strong> — your <code>fsk_...</code> key issued by the engine operator.</li>
+            <li><strong>IAP Client ID</strong> — the OAuth client ID of the engine's IAP audience. Same for every frontend on this engine.</li>
+            <li><strong>Service Account Key</strong> — upload the JSON key file from the engine operator, or leave empty on Cloud Run to use Application Default Credentials.</li>
+          </ol>
+
+          <div class="doc-callout">
+            <strong>How auth flows:</strong> your browser calls <code>http://localhost:8080/api/...</code>. The frontend's server adds two headers before forwarding to the engine: <code>Authorization: Bearer &lt;IAP ID token&gt;</code> (minted from the SA) and <code>X-Api-Key: fsk_...</code>. The browser never sees either credential.
+          </div>
+
+          <h2>2. Submit a job from the browser</h2>
+          <p>Every endpoint below is exposed at <code>/api/*</code> on the frontend. Call them with plain <code>fetch</code> — no headers needed.</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-label">JavaScript · browser</span>
+              <button class="copy-btn" data-copy="qs-submit">Copy</button>
+            </div>
+<pre id="qs-submit"><code>const form = new FormData();
+form.append('mode', '2d');
+form.append('product_image', productFile);
+form.append('background_image', backgroundFile);
+form.append('action_prompt', 'on a polished marble countertop');
+
+const res = await fetch('/api/process', { method: 'POST', body: form });
+const { job_id } = await res.json();
+console.log('Submitted:', job_id);</code></pre>
+          </div>
+
+          <h2>3. Poll until it finishes</h2>
+          <p>Jobs run asynchronously. <code>/process</code> returns <code>202</code> immediately — poll <code>/api/jobs/:id</code> every second or two until <code>status</code> flips to <code>completed</code> or <code>failed</code>.</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-label">JavaScript · browser</span>
+              <button class="copy-btn" data-copy="qs-poll">Copy</button>
+            </div>
+<pre id="qs-poll"><code>async function waitForJob(jobId) {
+  while (true) {
+    const r = await fetch(`/api/jobs/${jobId}`);
+    const job = await r.json();
+
+    if (job.status === 'completed') return job;
+    if (job.status === 'failed') throw new Error(job.error);
+
+    console.log(`${job.progress || 0}% — ${job.current_step}`);
+    await new Promise(r => setTimeout(r, 1500));
+  }
+}</code></pre>
+          </div>
+
+          <h2>4. Fetch the results</h2>
+          <p>Once complete, <code>job.result.downloads</code> is a map of output name → URL. Or call <code>/api/downloads/:jobId</code> to get the same map without the full job record. URLs are already rewritten to <code>/api/download/...</code> so they work in the browser.</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-label">JavaScript · browser</span>
+              <button class="copy-btn" data-copy="qs-results">Copy</button>
+            </div>
+<pre id="qs-results"><code>const job = await waitForJob(job_id);
+
+for (const [name, url] of Object.entries(job.result.downloads)) {
+  const img = document.createElement('img');
+  img.src = url;
+  img.alt = name;
+  document.body.appendChild(img);
+}</code></pre>
+          </div>
+
+          <h2>Full end-to-end example</h2>
+          <p>Putting it all together — a single function that takes two <code>File</code> objects and returns the final image as a blob.</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-label">JavaScript · browser</span>
+              <button class="copy-btn" data-copy="qs-full">Copy</button>
+            </div>
+<pre id="qs-full"><code>async function processImage(productFile, backgroundFile, prompt = '') {
+  const form = new FormData();
+  form.append('mode', '2d');
+  form.append('product_image', productFile);
+  form.append('background_image', backgroundFile);
+  if (prompt) form.append('action_prompt', prompt);
+
+  const submit = await fetch('/api/process', { method: 'POST', body: form });
+  if (!submit.ok) throw new Error(`Submit failed: ${submit.status}`);
+  const { job_id } = await submit.json();
+
+  while (true) {
+    const r = await fetch(`/api/jobs/${job_id}`);
+    const job = await r.json();
+    if (job.status === 'completed') {
+      const finalUrl = job.result.downloads.final_image
+                    || job.result.downloads.final
+                    || Object.values(job.result.downloads)[0];
+      return fetch(finalUrl).then(r =&gt; r.blob());
+    }
+    if (job.status === 'failed') throw new Error(job.error);
+    await new Promise(r =&gt; setTimeout(r, 1500));
+  }
+}
+
+const blob = await processImage(productFile, bgFile, 'cinematic lighting');
+const url = URL.createObjectURL(blob);
+window.open(url);</code></pre>
+          </div>
+
+          <h2>Calling the engine directly (no frontend proxy)</h2>
+          <p>If you're integrating server-side in another language, skip this frontend entirely and call frameshift-local directly. You'll need to mint an IAP ID token yourself.</p>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-label">bash · curl</span>
+              <button class="copy-btn" data-copy="qs-curl">Copy</button>
+            </div>
+<pre id="qs-curl"><code>IAP_TOKEN=$(gcloud auth print-identity-token \
+  --audiences=$IAP_CLIENT_ID \
+  --impersonate-service-account=$SA_EMAIL)
+
+curl -s "$ENGINE_URL/process" \
+  -H "Authorization: Bearer $IAP_TOKEN" \
+  -H "X-Api-Key: $FRAMESHIFT_API_KEY" \
+  -F "mode=2d" \
+  -F "product_image=@./product.png" \
+  -F "background_image=@./background.jpg" \
+  -F "action_prompt=studio lighting"</code></pre>
+          </div>
+
+          <div class="doc-callout doc-callout-warn">
+            <strong>Gotchas:</strong> IAP tokens expire after ~1 hour — refresh them. If your SA key is wrong, IAP returns a Google login HTML page, not JSON. If the <code>X-Api-Key</code> is missing or wrong, IAP passes but the engine returns <code>401</code>.
+          </div>
+
+          <h2>Next steps</h2>
+          <ul>
+            <li>See the <a href="#" onclick="switchTab('endpoints');return false;">Endpoints</a> page for the full request/response schema of every route.</li>
+            <li>Check the <code>IMPLEMENTATION-GUIDE.md</code> in this repo for deployment flavours (Cloud Run with attached SA vs. anywhere-else with a JSON key).</li>
+            <li>For admin tasks (generating <code>fsk_</code> keys, revoking them, viewing logs) talk to your engine operator — those endpoints are admin-only.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ENDPOINTS TAB ═══ -->
+    <div id="endpoints-tab" style="display:none">
+      <div class="page-header">
+        <div>
+          <h1>Endpoints</h1>
+          <p>Every engine route a frontend can call, with request and response shapes.</p>
+        </div>
+        <button class="btn-ghost btn-sm" onclick="switchTab('quickstart')">Quick Start</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-body doc-content">
+
+          <div class="doc-callout">
+            <strong>Two paths for every endpoint.</strong> <em>Engine</em> is the direct URL on <code>frameshift-local</code> (requires <code>Authorization: Bearer &lt;IAP token&gt;</code> + <code>X-Api-Key: fsk_...</code>). <em>Proxy</em> is the route this frontend exposes at <code>http://localhost:8080/...</code> — browser code calls that with no auth headers; the frontend server adds them.
+          </div>
+
+          <h2>Auth headers</h2>
+          <table class="param-table">
+            <thead>
+              <tr><th>Header</th><th>Required on</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Authorization</td>
+                <td>All engine endpoints (IAP gate)</td>
+                <td><code>Bearer &lt;Google ID token&gt;</code>, audience = <code>IAP_CLIENT_ID</code></td>
+              </tr>
+              <tr>
+                <td>X-Api-Key</td>
+                <td>All except <code>/health</code></td>
+                <td><code>fsk_...</code> — scopes jobs to your tenant</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>GET /health</h2>
+          <div class="endpoint">
+            <div class="endpoint-header">
+              <span class="method-badge method-get">GET</span>
+              <span class="endpoint-path">/health</span>
+              <span class="endpoint-proxy">proxy: /api/health</span>
+            </div>
+            <div class="endpoint-body">
+              <p class="endpoint-desc">Liveness probe and license snapshot. Does not require <code>X-Api-Key</code> — but IAP still gates it at the network layer.</p>
+
+              <h3>Response 200</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JSON</span>
+                  <button class="copy-btn" data-copy="ep-health-res">Copy</button>
+                </div>
+<pre id="ep-health-res"><code>{
+  "status": "ok",
+  "version": "dev",
+  "active_jobs": 1,
+  "queue_depth": 0,
+  "max_concurrent": 4,
+  "uptime": 1834,
+  "license": { "org": "Audi", "credits": 8421, "active": true }
+}</code></pre>
+              </div>
+
+              <h3>Example</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JavaScript · via proxy</span>
+                  <button class="copy-btn" data-copy="ep-health-ex">Copy</button>
+                </div>
+<pre id="ep-health-ex"><code>const health = await fetch('/api/health').then(r =&gt; r.json());
+if (health.status === 'ok') console.log(`${health.active_jobs} jobs running`);</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <h2>POST /process</h2>
+          <div class="endpoint">
+            <div class="endpoint-header">
+              <span class="method-badge method-post">POST</span>
+              <span class="endpoint-path">/process</span>
+              <span class="endpoint-proxy">proxy: /api/process</span>
+            </div>
+            <div class="endpoint-body">
+              <p class="endpoint-desc">Submit a full V2.1 pipeline job: preprocess → Gemini relight → wavelet detail transfer → post-process. Returns <code>202</code> immediately with a <code>job_id</code>; poll <code>/jobs/:id</code> until completion.</p>
+
+              <h3>Request (multipart/form-data)</h3>
+              <table class="param-table">
+                <thead>
+                  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>mode <span class="req-badge">required</span></td>
+                    <td>text</td>
+                    <td>One of <code>2d</code>, <code>cgi</code>, <code>cgi-topview</code>, <code>overlay</code>, <code>lite</code>, <code>prompt</code>, <code>prompt-raw</code></td>
+                  </tr>
+                  <tr>
+                    <td>product_image <span class="req-badge">required</span></td>
+                    <td>file</td>
+                    <td>JPEG / PNG / WebP, ≤ 50 MB</td>
+                  </tr>
+                  <tr>
+                    <td>background_image</td>
+                    <td>file</td>
+                    <td>Required unless <code>mode</code> is <code>prompt</code> or <code>prompt-raw</code></td>
+                  </tr>
+                  <tr>
+                    <td>detailing_mask</td>
+                    <td>file</td>
+                    <td>Optional mask for region-locked detail transfer</td>
+                  </tr>
+                  <tr>
+                    <td>action_prompt</td>
+                    <td>text</td>
+                    <td>Freeform prompt — appended to scene description in most modes, used raw in <code>prompt-raw</code></td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h3>Response 202</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JSON</span>
+                  <button class="copy-btn" data-copy="ep-process-res">Copy</button>
+                </div>
+<pre id="ep-process-res"><code>{
+  "message": "Job submitted",
+  "job_id": "job_1771234567890_abc123x",
+  "status": "processing"
+}</code></pre>
+              </div>
+
+              <h3>Example</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JavaScript · via proxy</span>
+                  <button class="copy-btn" data-copy="ep-process-ex">Copy</button>
+                </div>
+<pre id="ep-process-ex"><code>const form = new FormData();
+form.append('mode', '2d');
+form.append('product_image', productFile);
+form.append('background_image', bgFile);
+
+const { job_id } = await fetch('/api/process', {
+  method: 'POST',
+  body: form,
+}).then(r =&gt; r.json());</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <h2>POST /detail-transfer</h2>
+          <div class="endpoint">
+            <div class="endpoint-header">
+              <span class="method-badge method-post">POST</span>
+              <span class="endpoint-path">/detail-transfer</span>
+              <span class="endpoint-proxy">proxy: none (call engine directly)</span>
+            </div>
+            <div class="endpoint-body">
+              <p class="endpoint-desc">Runs only the wavelet color-match stage — no Gemini, no preprocessing, no cropping. Inputs must already be dimension-matched. Useful when you generated the relight image elsewhere and just want texture recovery on the original product.</p>
+
+              <h3>Request (multipart/form-data)</h3>
+              <table class="param-table">
+                <thead>
+                  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>product_image <span class="req-badge">required</span></td><td>file</td><td>Original product image</td></tr>
+                  <tr><td>relight_image <span class="req-badge">required</span></td><td>file</td><td>Pre-generated relight output; must match <code>product_image</code> dimensions</td></tr>
+                </tbody>
+              </table>
+
+              <h3>Response 202</h3>
+              <p>Same shape as <code>/process</code>.</p>
+
+              <h3>Example</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">bash · curl direct</span>
+                  <button class="copy-btn" data-copy="ep-dt-ex">Copy</button>
+                </div>
+<pre id="ep-dt-ex"><code>curl -s "$ENGINE_URL/detail-transfer" \
+  -H "Authorization: Bearer $IAP_TOKEN" \
+  -H "X-Api-Key: $FRAMESHIFT_API_KEY" \
+  -F "product_image=@./product.png" \
+  -F "relight_image=@./ai-relight.png"</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <h2>GET /jobs</h2>
+          <div class="endpoint">
+            <div class="endpoint-header">
+              <span class="method-badge method-get">GET</span>
+              <span class="endpoint-path">/jobs</span>
+              <span class="endpoint-proxy">proxy: /api/jobs</span>
+            </div>
+            <div class="endpoint-body">
+              <p class="endpoint-desc">List jobs submitted by <strong>this</strong> API key. Other tenants' jobs are never visible, even if you know their IDs.</p>
+
+              <h3>Response 200</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JSON</span>
+                  <button class="copy-btn" data-copy="ep-jobs-res">Copy</button>
+                </div>
+<pre id="ep-jobs-res"><code>[
+  {
+    "job_id": "job_1771234567890_abc123x",
+    "status": "completed",
+    "progress": 100,
+    "current_step": "completed",
+    "mode": "2d",
+    "created_at": "2026-04-23T14:12:03.118Z",
+    "completed_at": "2026-04-23T14:12:48.902Z",
+    "duration_seconds": 45,
+    "error": null
+  }
+]</code></pre>
+              </div>
+
+              <h3>Example</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JavaScript · via proxy</span>
+                  <button class="copy-btn" data-copy="ep-jobs-ex">Copy</button>
+                </div>
+<pre id="ep-jobs-ex"><code>const jobs = await fetch('/api/jobs').then(r =&gt; r.json());
+const recent = jobs.slice(0, 10);</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <h2>GET /jobs/:id</h2>
+          <div class="endpoint">
+            <div class="endpoint-header">
+              <span class="method-badge method-get">GET</span>
+              <span class="endpoint-path">/jobs/{jobId}</span>
+              <span class="endpoint-proxy">proxy: /api/jobs/{jobId}</span>
+            </div>
+            <div class="endpoint-body">
+              <p class="endpoint-desc">Get the full record for a single job. While in flight, <code>progress</code> and <code>current_step</code> update. Once <code>status</code> is <code>completed</code>, <code>result.downloads</code> is populated with URLs you can fetch.</p>
+
+              <h3>Response 200 — in flight</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JSON</span>
+                  <button class="copy-btn" data-copy="ep-job-res1">Copy</button>
+                </div>
+<pre id="ep-job-res1"><code>{
+  "job_id": "job_1771234567890_abc123x",
+  "status": "processing",
+  "progress": 55,
+  "current_step": "wavelet",
+  "input": {
+    "product": "product.png",
+    "background": "background.jpg",
+    "mode": "2d"
+  }
+}</code></pre>
+              </div>
+
+              <h3>Response 200 — completed</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JSON</span>
+                  <button class="copy-btn" data-copy="ep-job-res2">Copy</button>
+                </div>
+<pre id="ep-job-res2"><code>{
+  "job_id": "job_1771234567890_abc123x",
+  "status": "completed",
+  "progress": 100,
+  "duration_seconds": 45,
+  "result": {
+    "mode": "2d",
+    "outputs": {
+      "final": "/abs/path/final.png",
+      "base": "/abs/path/base.png"
+    },
+    "downloads": {
+      "final": "/download/job_177.../final.png",
+      "base":  "/download/job_177.../base.png"
+    }
+  }
+}</code></pre>
+              </div>
+
+              <h3>Example — polling loop</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JavaScript · via proxy</span>
+                  <button class="copy-btn" data-copy="ep-job-ex">Copy</button>
+                </div>
+<pre id="ep-job-ex"><code>async function waitFor(jobId) {
+  while (true) {
+    const job = await fetch(`/api/jobs/${jobId}`).then(r =&gt; r.json());
+    if (job.status === 'completed') return job;
+    if (job.status === 'failed') throw new Error(job.error);
+    await new Promise(r =&gt; setTimeout(r, 1500));
+  }
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <h2>GET /jobs/history</h2>
+          <div class="endpoint">
+            <div class="endpoint-header">
+              <span class="method-badge method-get">GET</span>
+              <span class="endpoint-path">/jobs/history</span>
+              <span class="endpoint-proxy">proxy: none (call engine directly)</span>
+            </div>
+            <div class="endpoint-body">
+              <p class="endpoint-desc">Pull your org's job history from the central license service. Survives engine instance restarts (the engine's in-memory job store is transient).</p>
+
+              <h3>Query parameters</h3>
+              <table class="param-table">
+                <thead>
+                  <tr><th>Name</th><th>Default</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>limit</td><td>100</td><td>Max records to return</td></tr>
+                </tbody>
+              </table>
+
+              <h3>Example</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">bash · curl direct</span>
+                  <button class="copy-btn" data-copy="ep-hist-ex">Copy</button>
+                </div>
+<pre id="ep-hist-ex"><code>curl -s "$ENGINE_URL/jobs/history?limit=20" \
+  -H "Authorization: Bearer $IAP_TOKEN" \
+  -H "X-Api-Key: $FRAMESHIFT_API_KEY"</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <h2>GET /api/downloads/:jobId</h2>
+          <div class="endpoint">
+            <div class="endpoint-header">
+              <span class="method-badge method-get">GET</span>
+              <span class="endpoint-path">/api/downloads/{jobId}</span>
+              <span class="endpoint-proxy">proxy: /api/downloads/{jobId}</span>
+            </div>
+            <div class="endpoint-body">
+              <p class="endpoint-desc">Convenience endpoint — returns just the download URL map for a completed job, without the full job record. The proxy rewrites the URLs to <code>/api/download/...</code> so they work directly in the browser.</p>
+
+              <h3>Response 200</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JSON — via proxy</span>
+                  <button class="copy-btn" data-copy="ep-dl-res">Copy</button>
+                </div>
+<pre id="ep-dl-res"><code>{
+  "final": "/api/download/job_177.../final.png",
+  "base":  "/api/download/job_177.../base.png"
+}</code></pre>
+              </div>
+
+              <h3>Example</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JavaScript · via proxy</span>
+                  <button class="copy-btn" data-copy="ep-dl-ex">Copy</button>
+                </div>
+<pre id="ep-dl-ex"><code>const urls = await fetch(`/api/downloads/${jobId}`).then(r =&gt; r.json());
+for (const [name, url] of Object.entries(urls)) {
+  const img = new Image();
+  img.src = url;
+  document.body.appendChild(img);
+}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <h2>GET /download/:jobId/:filename</h2>
+          <div class="endpoint">
+            <div class="endpoint-header">
+              <span class="method-badge method-get">GET</span>
+              <span class="endpoint-path">/download/{jobId}/{filename}</span>
+              <span class="endpoint-proxy">proxy: /api/download/{jobId}/{filename}</span>
+            </div>
+            <div class="endpoint-body">
+              <p class="endpoint-desc">Streams an actual output image. Served from local disk if the job is still on the engine instance, otherwise proxied from GCS. Content-Type is <code>image/png</code>.</p>
+
+              <h3>Example — download to disk</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">bash · curl direct</span>
+                  <button class="copy-btn" data-copy="ep-file-ex">Copy</button>
+                </div>
+<pre id="ep-file-ex"><code>curl -s "$ENGINE_URL/download/$JOB_ID/final.png" \
+  -H "Authorization: Bearer $IAP_TOKEN" \
+  -H "X-Api-Key: $FRAMESHIFT_API_KEY" \
+  -o final.png</code></pre>
+              </div>
+
+              <h3>Example — display in browser</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">HTML</span>
+                  <button class="copy-btn" data-copy="ep-file-img">Copy</button>
+                </div>
+<pre id="ep-file-img"><code>&lt;img src="/api/download/job_177.../final.png" alt="Final"&gt;</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <h2>Admin endpoints (not available to frontends)</h2>
+          <div class="doc-callout doc-callout-warn">
+            These require admin auth (session cookie or <code>Bearer $FRAMESHIFT_PASSWORD</code>), not an <code>fsk_</code> key. A frontend calling them gets <code>401</code>. Ask your engine operator if you need any of these actions.
+          </div>
+
+          <table class="param-table">
+            <thead>
+              <tr><th>Endpoint</th><th>Purpose</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>GET /</td><td>Engine dashboard HTML</td></tr>
+              <tr><td>POST /api/auth/login</td><td>Admin password login</td></tr>
+              <tr><td>GET /api/license</td><td>Full license record</td></tr>
+              <tr><td>GET /api/storage</td><td>GCS bucket config</td></tr>
+              <tr><td>POST /api/storage/setup</td><td>Configure the GCS output bucket</td></tr>
+              <tr><td>GET /api/keys</td><td>List <code>fsk_</code> keys</td></tr>
+              <tr><td>POST /api/keys</td><td>Create a new <code>fsk_</code> key</td></tr>
+              <tr><td>DELETE /api/keys/:id</td><td>Revoke an <code>fsk_</code> key</td></tr>
+              <tr><td>GET /api/console</td><td>Recent engine log buffer</td></tr>
+              <tr><td>GET /api/console/stream</td><td>Live engine log stream (SSE)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -1129,7 +1989,7 @@ function switchTab(tab) {
   $$('.nav-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
-  ['submit', 'jobs', 'connection'].forEach(t => {
+  ['submit', 'jobs', 'connection', 'quickstart', 'endpoints'].forEach(t => {
     const el = document.getElementById(t + '-tab');
     if (el) el.style.display = t === tab ? '' : 'none';
   });
@@ -1141,8 +2001,46 @@ function switchTab(tab) {
     $('#sidebar').classList.remove('open');
     $('#sidebarOverlay').classList.remove('open');
   }
+
+  window.scrollTo({ top: 0, behavior: 'auto' });
 }
 window.switchTab = switchTab;
+
+// ── Documentation: copy-to-clipboard for code blocks ──────────────────
+async function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    try { await navigator.clipboard.writeText(text); return true; } catch {}
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch { return false; }
+}
+
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  const targetId = btn.dataset.copy;
+  const el = targetId ? document.getElementById(targetId) : null;
+  const text = el ? el.innerText : '';
+  if (!text) return;
+  const ok = await copyText(text);
+  if (!ok) { toast('Copy failed — select the text manually'); return; }
+  const orig = btn.textContent;
+  btn.textContent = 'Copied';
+  btn.classList.add('copied');
+  setTimeout(() => {
+    btn.textContent = orig;
+    btn.classList.remove('copied');
+  }, 1500);
+});
 
 // ── Settings ──────────────────────────────────────────────────────────
 $('#toggleApiKey').addEventListener('click', () => {
