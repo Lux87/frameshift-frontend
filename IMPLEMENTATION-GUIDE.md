@@ -44,8 +44,8 @@ team hands you **four** things:
 
 | Value | What it is | Example |
 |-------|------------|---------|
-| Engine URL | The engine's IAP‑protected domain | `https://frameshift-engine.com` |
-| IAP Client ID | OAuth 2.0 client ID in the engine's GCP project — identifies the engine as an IAP audience | `73422879528-45ds2…apps.googleusercontent.com` |
+| Engine URL | The engine's IAP‑protected domain | `https://engine.example.com` |
+| IAP Client ID | OAuth 2.0 client ID in the engine's GCP project — identifies the engine as an IAP audience | `<YOUR_IAP_CLIENT_ID>.apps.googleusercontent.com` |
 | API Key | Engine API key issued **to you** from the engine dashboard | `fsk_abc123…` |
 | A GCP service account identity | Lives in the **engine's** GCP project, has `IAP-secured Web App User` on the engine's backend service | `yourtenant-frameshift@engine-project.iam.gserviceaccount.com` |
 
@@ -381,7 +381,7 @@ Every endpoint the frontend may call on `frameshift-local`, with example
 requests. All examples assume:
 
 ```bash
-ENGINE_URL=https://audi-frameshift-engine.com
+ENGINE_URL=https://engine.example.com
 FRAMESHIFT_API_KEY=fsk_abc123...
 IAP_TOKEN="$(gcloud auth print-identity-token \
   --audiences=$IAP_CLIENT_ID \
@@ -428,7 +428,7 @@ Response (200):
   "queue_depth": 0,
   "max_concurrent": 4,
   "uptime": 1834,
-  "license": { "org": "Audi", "credits": 8421, "active": true }
+  "license": { "org": "Acme", "credits": 8421, "active": true }
 }
 ```
 

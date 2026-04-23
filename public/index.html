@@ -1285,7 +1285,7 @@
           <p>Before anything works, fill in the four values on the <a href="#" onclick="switchTab('connection');return false;">Connection</a> page and hit <strong>Save</strong>, then <strong>Test connection</strong>.</p>
 
           <ol class="steps">
-            <li><strong>Engine URL</strong> — the IAP-protected engine domain, e.g. <code>https://audi-frameshift-engine.com</code>.</li>
+            <li><strong>Engine URL</strong> — the IAP-protected engine domain, e.g. <code>https://engine.example.com</code>.</li>
             <li><strong>API Key</strong> — your <code>fsk_...</code> key issued by the engine operator.</li>
             <li><strong>IAP Client ID</strong> — the OAuth client ID of the engine's IAP audience. Same for every frontend on this engine.</li>
             <li><strong>Service Account Key</strong> — upload the JSON key file from the engine operator, or leave empty on Cloud Run to use Application Default Credentials.</li>
@@ -1535,7 +1535,7 @@ curl -s "$ENGINE_URL/process" \
   "queue_depth": 0,
   "max_concurrent": 4,
   "uptime": 1834,
-  "license": { "org": "Audi", "credits": 8421, "active": true }
+  "license": { "org": "Acme", "credits": 8421, "active": true }
 }</code></pre>
               </div>
 

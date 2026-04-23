@@ -13,7 +13,7 @@ npm start
 
 Then open `http://localhost:8080` and fill in **Settings**:
 
-- **Engine URL** — the engine's IAP‑protected domain (e.g. `https://frameshift-engine.com`)
+- **Engine URL** — the engine's IAP‑protected domain (e.g. `https://engine.example.com`)
 - **API Key** — `fsk_…` key from the engine dashboard
 - **IAP Client ID** — OAuth client ID of the engine's IAP backend (leave empty for direct mode)
 - **Service Account Key** — upload a GCP service account `.json` with IAP access (or leave empty to use Application Default Credentials)
@@ -47,7 +47,7 @@ details (Cloud Run, local, rotating credentials, troubleshooting).
 ```
 Browser → Frontend (localhost:8080)
   → Express proxy adds IAP token + API key headers
-  → FrameShift Engine (frameshift-engine.com)
+  → FrameShift Engine (engine.example.com)
   → Cloud Run processes the job
   → Results stream back through the proxy
 ```
