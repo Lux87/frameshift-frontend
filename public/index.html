@@ -1752,6 +1752,30 @@ const recent = jobs.slice(0, 10);</code></pre>
                 </tbody>
               </table>
 
+              <h3>Response 200</h3>
+              <div class="code-block">
+                <div class="code-block-header">
+                  <span class="code-block-label">JSON</span>
+                  <button class="copy-btn" data-copy="ep-hist-res">Copy</button>
+                </div>
+<pre id="ep-hist-res"><code>[
+  {
+    "jobId": "job_1771234567890_abc123x",
+    "status": "completed",
+    "mode": "2d",
+    "apiKeyId": "key_a1b2c3d4",
+    "createdAt": "2026-04-23T14:12:03.118Z",
+    "completedAt": "2026-04-23T14:12:48.902Z",
+    "duration": 45,
+    "error": null
+  }
+]</code></pre>
+              </div>
+
+              <div class="doc-callout">
+                Note the camelCase keys — this endpoint is a passthrough from the central license service, so its shape differs from <code>/jobs</code> (which uses <code>job_id</code>, <code>created_at</code>, etc.).
+              </div>
+
               <h3>Example</h3>
               <div class="code-block">
                 <div class="code-block-header">
@@ -1836,28 +1860,6 @@ for (const [name, url] of Object.entries(urls)) {
             </div>
           </div>
 
-          <h2>Admin endpoints (not available to frontends)</h2>
-          <div class="doc-callout doc-callout-warn">
-            These require admin auth (session cookie or <code>Bearer $FRAMESHIFT_PASSWORD</code>), not an <code>fsk_</code> key. A frontend calling them gets <code>401</code>. Ask your engine operator if you need any of these actions.
-          </div>
-
-          <table class="param-table">
-            <thead>
-              <tr><th>Endpoint</th><th>Purpose</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>GET /</td><td>Engine dashboard HTML</td></tr>
-              <tr><td>POST /api/auth/login</td><td>Admin password login</td></tr>
-              <tr><td>GET /api/license</td><td>Full license record</td></tr>
-              <tr><td>GET /api/storage</td><td>GCS bucket config</td></tr>
-              <tr><td>POST /api/storage/setup</td><td>Configure the GCS output bucket</td></tr>
-              <tr><td>GET /api/keys</td><td>List <code>fsk_</code> keys</td></tr>
-              <tr><td>POST /api/keys</td><td>Create a new <code>fsk_</code> key</td></tr>
-              <tr><td>DELETE /api/keys/:id</td><td>Revoke an <code>fsk_</code> key</td></tr>
-              <tr><td>GET /api/console</td><td>Recent engine log buffer</td></tr>
-              <tr><td>GET /api/console/stream</td><td>Live engine log stream (SSE)</td></tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
