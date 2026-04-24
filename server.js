@@ -195,6 +195,41 @@ app.post('/api/process', upload.fields([
   }
 });
 
+// ── Detail-transfer (wavelet-only, no Gemini) ───────────────────────────────
+// Separate endpoint on the engine — takes product_image + relight_image (both
+// must already be dimension-matched) and runs only the wavelet colour-match
+// pass. Same job-tracking surface as /process, so the UI reuses the jobs tab
+// and downloads pipeline.
+app.post('/api/detail-transfer', upload.fields([
+  { name: 'product_image', maxCount: 1 },
+  { name: 'relight_image', maxCount: 1 },
+]), async (req, res) => {
+  try {
+    const formData = new FormData();
+
+    if (req.body.webhook_url) formData.append('webhook_url', req.body.webhook_url);
+
+    for (const field of ['product_image', 'relight_image']) {
+      if (req.files?.[field]?.[0]) {
+        const file = req.files[field][0];
+        const buf = readFileSync(file.path);
+        formData.append(field, new Blob([buf], { type: file.mimetype }), file.originalname);
+        try { unlinkSync(file.path); } catch {}
+      }
+    }
+
+    const resp = await proxyToEngine('/detail-transfer', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (err) {
+    res.status(errorStatus(err)).json({ error: err.message });
+  }
+});
+
 // ── Job status ──────────────────────────────────────────────────────────────
 app.get('/api/jobs', async (req, res) => {
   try {

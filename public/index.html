@@ -1152,6 +1152,15 @@
           <h2>New Job</h2>
         </div>
         <div class="panel-body">
+          <div class="field">
+            <label>Endpoint</label>
+            <select id="endpointSelect">
+              <option value="process">Standard relight — full pipeline (/process)</option>
+              <option value="detail-transfer">Detail transfer only — wavelet pass (/detail-transfer)</option>
+            </select>
+            <div class="mode-desc" id="endpointDesc"></div>
+          </div>
+
           <div class="submit-grid">
             <div class="field">
               <label>Product Image *</label>
@@ -1163,16 +1172,17 @@
             </div>
 
             <div class="field" id="bgField">
-              <label>Background Image *</label>
+              <label id="bgLabel">Background Image *</label>
               <div class="drop-zone" id="dropBackground">
                 <div class="icon">+</div>
                 <div class="dz-label">Drop image or click to browse</div>
                 <input type="file" accept="image/png,image/jpeg,image/webp">
               </div>
+              <div class="hint" id="bgHint" style="display:none">Relight image must match product dimensions — no resizing happens server-side.</div>
             </div>
           </div>
 
-          <div class="field">
+          <div class="field" id="maskField">
             <label>Detailing Mask <span style="color:var(--text3);font-weight:400;">(optional)</span></label>
             <div class="drop-zone" id="dropMask">
               <div class="icon">+</div>
@@ -1182,7 +1192,7 @@
             <div class="hint">Optional mask to guide detail transfer on a specific region.</div>
           </div>
 
-          <div class="field">
+          <div class="field" id="modeField">
             <label>Mode</label>
             <select id="modeSelect">
               <option value="2d">2D — Standard relight with scene analysis</option>
@@ -1701,10 +1711,10 @@ const { job_id } = await fetch('/api/process', {
             <div class="endpoint-header">
               <span class="method-badge method-post">POST</span>
               <span class="endpoint-path">/detail-transfer</span>
-              <span class="endpoint-proxy">proxy: none (call engine directly)</span>
+              <span class="endpoint-proxy">proxy: /api/detail-transfer</span>
             </div>
             <div class="endpoint-body">
-              <p class="endpoint-desc">Runs only the wavelet color-match stage — no Gemini, no preprocessing, no cropping. Inputs must already be dimension-matched. Useful when you generated the relight image elsewhere and just want texture recovery on the original product.</p>
+              <p class="endpoint-desc">Runs only the wavelet color-match stage — no Gemini, no preprocessing, no cropping. Inputs must already be dimension-matched. Useful when you generated the relight image elsewhere and just want texture recovery on the original product. You can also submit this from the <strong>New Job</strong> tab by switching the <em>Endpoint</em> selector to "Detail transfer only".</p>
 
               <h3>Request (multipart/form-data)</h3>
               <table class="param-table">
@@ -1724,14 +1734,17 @@ const { job_id } = await fetch('/api/process', {
               <h3>Example</h3>
               <div class="code-block">
                 <div class="code-block-header">
-                  <span class="code-block-label">bash · curl direct</span>
+                  <span class="code-block-label">JavaScript · via proxy</span>
                   <button class="copy-btn" data-copy="ep-dt-ex">Copy</button>
                 </div>
-<pre id="ep-dt-ex"><code>curl -s "$ENGINE_URL/detail-transfer" \
-  -H "Authorization: Bearer $IAP_TOKEN" \
-  -H "X-Api-Key: $FRAMESHIFT_API_KEY" \
-  -F "product_image=@./product.png" \
-  -F "relight_image=@./ai-relight.png"</code></pre>
+<pre id="ep-dt-ex"><code>const form = new FormData();
+form.append('product_image', productFile);
+form.append('relight_image', relightFile);
+
+const { job_id } = await fetch('/api/detail-transfer', {
+  method: 'POST',
+  body: form,
+}).then(r =&gt; r.json());</code></pre>
               </div>
             </div>
           </div>
@@ -2485,26 +2498,72 @@ const modeDescs = {
 
 const promptModes = new Set(['prompt', 'prompt-raw']);
 
-function updateMode() {
-  const mode = $('#modeSelect').value;
-  $('#modeDesc').textContent = modeDescs[mode] || '';
+const endpointDescs = {
+  'process': 'Full pipeline: preprocess → Gemini relight → wavelet detail transfer → post-process.',
+  'detail-transfer': 'Wavelet colour-match only — skips Gemini. Both images must already match in dimensions.',
+};
 
-  const isPrompt = promptModes.has(mode);
+function currentEndpoint() {
+  return $('#endpointSelect').value;
+}
+
+function updateEndpoint() {
+  const ep = currentEndpoint();
+  $('#endpointDesc').textContent = endpointDescs[ep] || '';
+
+  const isDT = ep === 'detail-transfer';
+  $('#modeField').style.display = isDT ? 'none' : '';
+  $('#maskField').style.display = isDT ? 'none' : '';
+  $('#bgLabel').textContent = isDT ? 'Relight Image *' : 'Background Image *';
+  $('#bgHint').style.display = isDT ? '' : 'none';
+
+  resetDropZone($('#dropBackground'));
+  updateMode();
+}
+
+function updateMode() {
+  const ep = currentEndpoint();
+  const mode = $('#modeSelect').value;
+  $('#modeDesc').textContent = endpointDescs[ep] === undefined ? '' : (ep === 'detail-transfer' ? '' : (modeDescs[mode] || ''));
+
+  const isPrompt = ep === 'process' && promptModes.has(mode);
   $('#bgField').style.display = isPrompt ? 'none' : '';
   $('#promptField').style.display = isPrompt ? '' : 'none';
 
   updateSubmitBtn();
 }
 
+$('#endpointSelect').addEventListener('change', updateEndpoint);
 $('#modeSelect').addEventListener('change', updateMode);
-updateMode();
+updateEndpoint();
 
 function updateSubmitBtn() {
   const hasProduct = $('#dropProduct input').files.length > 0;
+  const ep = currentEndpoint();
   const mode = $('#modeSelect').value;
-  const needsBg = !promptModes.has(mode);
+  const needsBg = ep === 'detail-transfer' ? true : !promptModes.has(mode);
   const hasBg = $('#dropBackground input').files.length > 0;
   $('#submitBtn').disabled = !hasProduct || (needsBg && !hasBg);
+}
+
+// Read file into an Image to check dimensions. Used for the detail-transfer
+// preflight — the engine will reject mismatched inputs mid-pipeline, so we
+// catch it early and give a clearer error.
+function readImageSize(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const size = { width: img.naturalWidth, height: img.naturalHeight };
+      URL.revokeObjectURL(url);
+      resolve(size);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not decode image'));
+    };
+    img.src = url;
+  });
 }
 
 // ── Submit ────────────────────────────────────────────────────────────
@@ -2513,25 +2572,36 @@ $('#submitBtn').addEventListener('click', async () => {
   btn.disabled = true;
   btn.textContent = 'Submitting...';
 
-  const form = new FormData();
-  form.append('product_image', $('#dropProduct input').files[0]);
-  form.append('mode', $('#modeSelect').value);
-
-  if (!promptModes.has($('#modeSelect').value)) {
-    form.append('background_image', $('#dropBackground input').files[0]);
-  }
-
-  const maskFile = $('#dropMask input').files[0];
-  if (maskFile) {
-    form.append('detailing_mask', maskFile);
-  }
-
-  if ($('#actionPrompt').value.trim()) {
-    form.append('action_prompt', $('#actionPrompt').value.trim());
-  }
+  const ep = currentEndpoint();
+  const productFile = $('#dropProduct input').files[0];
+  const bgFile = $('#dropBackground input').files[0];
 
   try {
-    const r = await fetch('/api/process', { method: 'POST', body: form });
+    let fetchUrl;
+    const form = new FormData();
+    form.append('product_image', productFile);
+
+    if (ep === 'detail-transfer') {
+      const [a, b] = await Promise.all([readImageSize(productFile), readImageSize(bgFile)]);
+      if (a.width !== b.width || a.height !== b.height) {
+        throw new Error(`Dimension mismatch — product is ${a.width}×${a.height}, relight is ${b.width}×${b.height}. Detail transfer needs matching dimensions.`);
+      }
+      form.append('relight_image', bgFile);
+      fetchUrl = '/api/detail-transfer';
+    } else {
+      form.append('mode', $('#modeSelect').value);
+      if (!promptModes.has($('#modeSelect').value)) {
+        form.append('background_image', bgFile);
+      }
+      const maskFile = $('#dropMask input').files[0];
+      if (maskFile) form.append('detailing_mask', maskFile);
+      if ($('#actionPrompt').value.trim()) {
+        form.append('action_prompt', $('#actionPrompt').value.trim());
+      }
+      fetchUrl = '/api/process';
+    }
+
+    const r = await fetch(fetchUrl, { method: 'POST', body: form });
     const d = await r.json();
 
     if (!r.ok) throw new Error(d.error || 'Submit failed');
@@ -2549,19 +2619,23 @@ $('#submitBtn').addEventListener('click', async () => {
   }
 });
 
+function resetDropZone(zone) {
+  if (!zone) return;
+  zone.classList.remove('has-file');
+  const icon = zone.querySelector('.icon');
+  const label = zone.querySelector('.dz-label');
+  if (icon) icon.style.display = '';
+  if (label) label.textContent = 'Drop image or click to browse';
+  const fn = zone.querySelector('.filename');
+  if (fn) fn.remove();
+  const prev = zone.querySelector('.preview');
+  if (prev) prev.remove();
+  const input = zone.querySelector('input');
+  if (input) input.value = '';
+}
+
 function resetForm() {
-  for (const zone of $$('.drop-zone')) {
-    zone.classList.remove('has-file');
-    const icon = zone.querySelector('.icon');
-    const label = zone.querySelector('.dz-label');
-    if (icon) icon.style.display = '';
-    if (label) label.textContent = 'Drop image or click to browse';
-    const fn = zone.querySelector('.filename');
-    if (fn) fn.remove();
-    const prev = zone.querySelector('.preview');
-    if (prev) prev.remove();
-    zone.querySelector('input').value = '';
-  }
+  for (const zone of $$('.drop-zone')) resetDropZone(zone);
   $('#actionPrompt').value = '';
 }
 
