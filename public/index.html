@@ -1211,6 +1211,12 @@
             <input type="text" id="actionPrompt" placeholder="Describe the scene...">
           </div>
 
+          <div class="field">
+            <label>Webhook URL <span style="color:var(--text3);font-weight:400;">(optional)</span></label>
+            <input type="url" id="webhookUrl" placeholder="https://webhook.site/...">
+            <div class="hint">If set, the engine POSTs a signed JSON payload here when the job reaches <code>completed</code> or <code>failed</code>. Must be <code>https://</code>.</div>
+          </div>
+
           <button class="btn-primary btn-full" id="submitBtn" disabled>Submit Job</button>
         </div>
       </div>
@@ -2601,6 +2607,14 @@ $('#submitBtn').addEventListener('click', async () => {
       fetchUrl = '/api/process';
     }
 
+    const webhookUrl = $('#webhookUrl').value.trim();
+    if (webhookUrl) {
+      if (!/^https:\/\//i.test(webhookUrl)) {
+        throw new Error('Webhook URL must start with https://');
+      }
+      form.append('webhook_url', webhookUrl);
+    }
+
     const r = await fetch(fetchUrl, { method: 'POST', body: form });
     const d = await r.json();
 
@@ -2637,6 +2651,7 @@ function resetDropZone(zone) {
 function resetForm() {
   for (const zone of $$('.drop-zone')) resetDropZone(zone);
   $('#actionPrompt').value = '';
+  $('#webhookUrl').value = '';
 }
 
 // ── Job polling ───────────────────────────────────────────────────────
