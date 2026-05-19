@@ -476,23 +476,24 @@ cropping. Inputs must already be dimension‑matched. Useful when you
 pre‑generated the relight elsewhere and only want texture recovery.
 
 - **Engine**: `POST ${ENGINE_URL}/detail-transfer` (multipart)
-- **Proxy**: not exposed by the current frontend — call the engine
-  directly, or add a proxy route to `server.js` mirroring `/api/process`.
+- **Proxy**: `POST /api/detail-transfer` mirrors the engine route.
 
-| Field | Type | Required |
-|-------|------|----------|
-| `product_image` | file | yes |
-| `relight_image` | file | yes |
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `product_image` | file | yes | |
+| `relight_image` | file | yes | Same dimensions as `product_image`. |
+| `detailing_mask` | file | no | Optional. Same aspect ratio as the inputs. When present, the detailed result is composited over `relight_image` using the mask as alpha, producing an extra `final` output. |
 
 ```bash
 curl -s "$ENGINE_URL/detail-transfer" \
   -H "Authorization: Bearer $IAP_TOKEN" \
   -H "X-Api-Key: $FRAMESHIFT_API_KEY" \
   -F "product_image=@./product.png" \
-  -F "relight_image=@./ai-relight.png"
+  -F "relight_image=@./ai-relight.png" \
+  -F "detailing_mask=@./mask.png"
 ```
 
-Response (202): same shape as `/process`.
+Response (202): same shape as `/process`. With a mask, the completed job's `result.downloads` contains both `detailing` and `final`; without a mask, only `detailing`.
 
 ### 11.5 `GET /jobs` — list jobs
 

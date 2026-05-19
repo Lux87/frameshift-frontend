@@ -203,13 +203,14 @@ app.post('/api/process', upload.fields([
 app.post('/api/detail-transfer', upload.fields([
   { name: 'product_image', maxCount: 1 },
   { name: 'relight_image', maxCount: 1 },
+  { name: 'detailing_mask', maxCount: 1 },
 ]), async (req, res) => {
   try {
     const formData = new FormData();
 
     if (req.body.webhook_url) formData.append('webhook_url', req.body.webhook_url);
 
-    for (const field of ['product_image', 'relight_image']) {
+    for (const field of ['product_image', 'relight_image', 'detailing_mask']) {
       if (req.files?.[field]?.[0]) {
         const file = req.files[field][0];
         const buf = readFileSync(file.path);

@@ -1730,6 +1730,7 @@ const { job_id } = await fetch('/api/process', {
                 <tbody>
                   <tr><td>product_image <span class="req-badge">required</span></td><td>file</td><td>Original product image</td></tr>
                   <tr><td>relight_image <span class="req-badge">required</span></td><td>file</td><td>Pre-generated relight output; must match <code>product_image</code> dimensions</td></tr>
+                  <tr><td>detailing_mask</td><td>file</td><td>Optional mask (same aspect ratio as the inputs). When provided, the detailed result is composited over <code>relight_image</code> using the mask as alpha, producing an extra <code>final</code> output.</td></tr>
                   <tr><td>webhook_url</td><td>text</td><td>Optional <code>https://</code> URL for completion notification — see <a href="#webhooks">Webhooks</a>.</td></tr>
                 </tbody>
               </table>
@@ -1746,6 +1747,8 @@ const { job_id } = await fetch('/api/process', {
 <pre id="ep-dt-ex"><code>const form = new FormData();
 form.append('product_image', productFile);
 form.append('relight_image', relightFile);
+// Optional — composites the detailed result over the relight using mask as alpha
+if (maskFile) form.append('detailing_mask', maskFile);
 
 const { job_id } = await fetch('/api/detail-transfer', {
   method: 'POST',
@@ -2519,7 +2522,6 @@ function updateEndpoint() {
 
   const isDT = ep === 'detail-transfer';
   $('#modeField').style.display = isDT ? 'none' : '';
-  $('#maskField').style.display = isDT ? 'none' : '';
   $('#bgLabel').textContent = isDT ? 'Relight Image *' : 'Background Image *';
   $('#bgHint').style.display = isDT ? '' : 'none';
 
@@ -2593,6 +2595,14 @@ $('#submitBtn').addEventListener('click', async () => {
         throw new Error(`Dimension mismatch — product is ${a.width}×${a.height}, relight is ${b.width}×${b.height}. Detail transfer needs matching dimensions.`);
       }
       form.append('relight_image', bgFile);
+      const maskFile = $('#dropMask input').files[0];
+      if (maskFile) {
+        const m = await readImageSize(maskFile);
+        if (m.width * a.height !== m.height * a.width) {
+          throw new Error(`Mask aspect ratio mismatch — mask is ${m.width}×${m.height}, inputs are ${a.width}×${a.height}.`);
+        }
+        form.append('detailing_mask', maskFile);
+      }
       fetchUrl = '/api/detail-transfer';
     } else {
       form.append('mode', $('#modeSelect').value);
