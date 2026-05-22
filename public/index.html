@@ -2536,7 +2536,7 @@ function updateMode() {
 
   const isPrompt = ep === 'process' && promptModes.has(mode);
   $('#bgField').style.display = isPrompt ? 'none' : '';
-  $('#promptField').style.display = isPrompt ? '' : 'none';
+  $('#promptField').style.display = ep === 'process' ? '' : 'none';
 
   updateSubmitBtn();
 }
