@@ -3487,7 +3487,6 @@ function openBlendForJob(jobId) {
   const baseKey = has('base_image_original') ? 'base_image_original' : (has('base_image') ? 'base_image' : null);
   const detailKey = has('detailing_image_original') ? 'detailing_image_original' : (has('detailing_image') ? 'detailing_image' : null);
   const finalKey = has('final_image_original') ? 'final_image_original' : (has('final_image') ? 'final_image' : null);
-  const productKey = has('product_original') ? 'product_original' : (has('product') ? 'product' : null);
 
   if (baseKey && detailKey && !finalKey) {
     layers.push({ imageUrl: url(baseKey), name: 'Base', hasMask: false });
@@ -3505,10 +3504,6 @@ function openBlendForJob(jobId) {
   } else {
     const first = Object.entries(downloads).find(([k]) => k.includes('original')) || Object.entries(downloads)[0];
     if (first) layers.push({ imageUrl: first[1], name: first[0].replace(/_/g, ' '), hasMask: false });
-  }
-
-  if (productKey) {
-    layers.push({ imageUrl: url(productKey), name: 'Product', hasMask: true, initialMaskState: 'hidden' });
   }
 
   if (layers.length === 0) { toast('No blendable layers found'); return; }
