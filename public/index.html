@@ -2223,8 +2223,25 @@ const $$ = s => document.querySelectorAll(s);
 const state = {
   jobs: [],
   polling: new Set(),
+  expanded: new Set(),
   currentTab: 'submit',
 };
+
+function toggleJobExpand(jobId) {
+  if (state.expanded.has(jobId)) {
+    state.expanded.delete(jobId);
+    renderJobs();
+    return;
+  }
+  state.expanded.add(jobId);
+  const job = state.jobs.find(j => j.job_id === jobId);
+  if (job && !job.downloads) {
+    loadDownloads(jobId);
+  } else {
+    renderJobs();
+  }
+}
+window.toggleJobExpand = toggleJobExpand;
 
 // ── Toast ─────────────────────────────────────────────────────────────
 function toast(msg) {
@@ -2679,7 +2696,7 @@ function startPolling(jobId) {
 
       if (job.status === 'completed') {
         state.polling.delete(jobId);
-        loadDownloads(jobId);
+        if (state.expanded.has(jobId)) loadDownloads(jobId);
         checkEngine();
         return;
       }
@@ -2749,7 +2766,7 @@ async function refreshJobs() {
       updateJobInState(job);
       if (job.status === 'processing' || job.status === 'queued') {
         startPolling(job.job_id);
-      } else if (job.status === 'completed') {
+      } else if (job.status === 'completed' && state.expanded.has(job.job_id)) {
         loadDownloads(job.job_id);
       }
     }
@@ -2800,37 +2817,44 @@ function renderJobs() {
       html += `<div class="job-error">${escHtml(job.error)}</div>`;
     }
 
-    if (job.downloads && Object.keys(job.downloads).length) {
-      const gcsLinks = job.gcsLinks || {};
-      const entries = Object.entries(job.downloads);
-      const originals = entries.filter(([k]) => k.includes('original'));
-      const showEntries = originals.length ? originals : entries;
-      const downloadIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
-      const cloudIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>';
+    if (statusClass === 'completed') {
+      const isExpanded = state.expanded.has(job.job_id);
+      html += `<button class="blend-btn" style="margin-top:8px" onclick="toggleJobExpand('${escAttr(job.job_id)}')">${isExpanded ? 'Hide results' : 'Show results'}</button>`;
 
-      html += `<div class="thumb-grid">`;
-      for (const [name, url] of showEntries) {
-        const label = name.replace(/_/g, ' ').replace(' original', '');
-        const gcsUrl = gcsLinks[name] || null;
-        const cardClick = `openLightbox('${escAttr(url)}')`;
-        html += `<div class="thumb-card" onclick="${cardClick}">`;
-        html += `<img src="${escAttr(url)}" alt="${escHtml(name)}" loading="lazy">`;
-        html += `<div class="thumb-label">${escHtml(label)}</div>`;
-        html += `<div class="thumb-actions">`;
-        html += `<a class="thumb-action-btn" href="${escAttr(url)}" download onclick="event.stopPropagation()" title="Download">${downloadIcon}</a>`;
-        if (gcsUrl) {
-          html += `<a class="thumb-action-btn" href="${escAttr(gcsUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open in Google Cloud Storage">${cloudIcon}</a>`;
+      if (isExpanded) {
+        if (job.downloads && Object.keys(job.downloads).length) {
+          const gcsLinks = job.gcsLinks || {};
+          const entries = Object.entries(job.downloads);
+          const originals = entries.filter(([k]) => k.includes('original'));
+          const showEntries = originals.length ? originals : entries;
+          const downloadIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+          const cloudIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>';
+
+          html += `<div class="thumb-grid">`;
+          for (const [name, url] of showEntries) {
+            const label = name.replace(/_/g, ' ').replace(' original', '');
+            const gcsUrl = gcsLinks[name] || null;
+            const cardClick = `openLightbox('${escAttr(url)}')`;
+            html += `<div class="thumb-card" onclick="${cardClick}">`;
+            html += `<img src="${escAttr(url)}" alt="${escHtml(name)}" loading="lazy">`;
+            html += `<div class="thumb-label">${escHtml(label)}</div>`;
+            html += `<div class="thumb-actions">`;
+            html += `<a class="thumb-action-btn" href="${escAttr(url)}" download onclick="event.stopPropagation()" title="Download">${downloadIcon}</a>`;
+            if (gcsUrl) {
+              html += `<a class="thumb-action-btn" href="${escAttr(gcsUrl)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open in Google Cloud Storage">${cloudIcon}</a>`;
+            }
+            html += `</div>`;
+            html += `</div>`;
+          }
+          html += `</div>`;
+
+          if (hasBlendableOutputs(job.downloads)) {
+            html += `<button class="blend-btn" onclick="openBlendForJob('${escAttr(job.job_id)}')">Open Blend Editor</button>`;
+          }
+        } else {
+          html += `<div class="job-duration">Loading results...</div>`;
         }
-        html += `</div>`;
-        html += `</div>`;
       }
-      html += `</div>`;
-
-      if (hasBlendableOutputs(job.downloads)) {
-        html += `<button class="blend-btn" onclick="openBlendForJob('${escAttr(job.job_id)}')">Open Blend Editor</button>`;
-      }
-    } else if (statusClass === 'completed' && !job.downloads) {
-      html += `<div class="job-duration">Loading results...</div>`;
     }
 
     html += `</div>`;
